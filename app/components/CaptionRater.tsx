@@ -11,6 +11,7 @@ type Caption = {
 
 export default function CaptionRater({ captions }: { captions: Caption[] }) {
   const [idx, setIdx] = useState(0);
+  const [imgFailed, setImgFailed] = useState(false);
 
   const current = captions[idx];
 
@@ -20,6 +21,7 @@ export default function CaptionRater({ captions }: { captions: Caption[] }) {
   }, [idx, captions]);
 
   function next() {
+    setImgFailed(false);
     setIdx((prev) => Math.min(prev + 1, captions.length));
   }
 
@@ -33,7 +35,10 @@ export default function CaptionRater({ captions }: { captions: Caption[] }) {
         <h3 style={{ margin: 0 }}>All done 🎉</h3>
         <p style={{ marginTop: 8, color: "#666" }}>You’ve rated all captions.</p>
         <button
-          onClick={() => setIdx(0)}
+          onClick={() => {
+            setImgFailed(false);
+            setIdx(0);
+          }}
           style={{
             marginTop: 10,
             padding: "8px 12px",
@@ -51,13 +56,7 @@ export default function CaptionRater({ captions }: { captions: Caption[] }) {
 
   return (
     <div style={{ marginTop: 14 }}>
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-        }}
-      >
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <span style={{ fontSize: 12, color: "#666" }}>{progressText}</span>
 
         <button
@@ -83,14 +82,8 @@ export default function CaptionRater({ captions }: { captions: Caption[] }) {
           padding: 16,
         }}
       >
-        {/* DEBUG (remove later if you want) */}
-        {/* Uncomment next line to see the image url on screen */}
-        {/* <div style={{ fontSize: 12, color: "#777", marginBottom: 8 }}>
-          imageUrl: {String(current.imageUrl)}
-        </div> */}
-
         {/* IMAGE */}
-        {current.imageUrl ? (
+        {current.imageUrl && !imgFailed ? (
           <img
             src={current.imageUrl}
             alt="Caption image"
@@ -103,22 +96,37 @@ export default function CaptionRater({ captions }: { captions: Caption[] }) {
               border: "1px solid rgba(0,0,0,0.08)",
               background: "#f2f2f2",
             }}
-            onError={() => {
-              // If image fails to load, you can temporarily uncomment the debug line above.
-              // This keeps the UI from crashing.
-              // (No console spam unless you want to add it.)
-            }}
+            onError={() => setImgFailed(true)}
           />
         ) : (
-          <div style={{ fontSize: 12, color: "#999", marginBottom: 10 }}>
-            (No image available)
+          <div
+            style={{
+              height: 260,
+              borderRadius: 12,
+              border: "1px solid rgba(0,0,0,0.08)",
+              background: "rgba(0,0,0,0.04)",
+              display: "grid",
+              placeItems: "center",
+              marginBottom: 12,
+              color: "#666",
+              fontSize: 13,
+            }}
+          >
+            Image unavailable
+          </div>
+        )}
+
+        {/* Optional: show the URL for debugging (remove later) */}
+        {imgFailed && (
+          <div style={{ fontSize: 12, color: "#888", marginBottom: 10, wordBreak: "break-all" }}>
+            Failed URL: {String(current.imageUrl)}
           </div>
         )}
 
         {/* CAPTION TEXT */}
         <div style={{ fontSize: 18, lineHeight: 1.4 }}>{current.content}</div>
 
-        {/* VOTE (advances to next after voting) */}
+        {/* VOTE -> NEXT */}
         <VoteButtons captionId={current.id} disabled={false} onVoted={next} />
       </div>
     </div>

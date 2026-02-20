@@ -5,7 +5,6 @@ import CaptionRater from "@/app/components/CaptionRater";
 export default async function ProtectedPage() {
   const supabase = await createSupabaseServerClient();
 
-  // Auth check
   const {
     data: { user },
     error: userError,
@@ -13,73 +12,97 @@ export default async function ProtectedPage() {
 
   if (userError || !user) {
     return (
-      <main
-        style={{
-          minHeight: "100vh",
-          display: "grid",
-          placeItems: "center",
-          padding: 24,
-          fontFamily:
-            '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
-          background: "#f6f7f9",
-        }}
-      >
-        <section
-          style={{
-            width: "100%",
-            maxWidth: 520,
-            background: "white",
-            borderRadius: 16,
-            padding: 24,
-            boxShadow: "0 10px 30px rgba(0,0,0,0.08)",
-            border: "1px solid rgba(0,0,0,0.06)",
-          }}
-        >
-          <h1 style={{ margin: 0, fontSize: 28, letterSpacing: -0.3 }}>
-            Protected
-          </h1>
-          <p style={{ marginTop: 10, color: "#444" }}>You are not logged in.</p>
-          <p style={{ marginTop: 10, color: "#666", fontSize: 14 }}>
-            Please sign in, then return to /protected.
-          </p>
-        </section>
+      <main style={{ padding: 40 }}>
+        <p>You must sign in to rate captions.</p>
       </main>
     );
   }
 
-  // 1) Fetch captions with image_id
-  const { data: captions, error: captionsError } = await supabase
+  // ✅ FETCH CAPTIONS FIRST (THIS WAS MISSING)
+  const { data: captionsData, error: captionsError } = await supabase
     .from("captions")
-    .select("id, content, image_id");
+    .select("id, content, image_id")
+    .not("image_id", "is", null)
+    .limit(8000);
 
   if (captionsError) {
     return (
-      <main style={{ padding: 24 }}>
-        <p style={{ color: "crimson" }}>
-          Error loading captions: {captionsError.message}
-        </p>
+      <main style={{ padding: 40 }}>
+        <p>Error loading captions: {captionsError.message}</p>
       </main>
     );
   }
 
-  // 2) Fetch image urls for those image_ids
-  const imageIds = Array.from(
-    new Set((captions ?? []).map((c: any) => c.image_id).filter(Boolean))
-  );
+  const captions = captionsData ?? [];
 
+  // ✅ GROUP BY IMAGE_ID (MAX 10 EACH)
+  const byImage = new Map<
+    string,
+    { id: string; content: string; image_id: string }[]
+  >();
+
+  for (const c of captions as any[]) {
+    const imgId = c.image_id ? String(c.image_id) : "";
+    if (!imgId) continue;
+
+    const arr = byImage.get(imgId) ?? [];
+    if (arr.length >= 10) continue;
+
+    arr.push({
+      id: String(c.id),
+      content: String(c.content ?? ""),
+      image_id: imgId,
+    });
+
+    byImage.set(imgId, arr);
+  }
+
+  const imageIds = Array.from(byImage.keys());
+
+  // ✅ FETCH IMAGE URLS
   const imageUrlById: Record<string, string> = {};
 
   if (imageIds.length > 0) {
-    const { data: imagesData, error: imagesError } = await supabase
+    const { data: imagesData } = await supabase
       .from("images")
       .select("id, url")
       .in("id", imageIds);
 
-    if (!imagesError && imagesData) {
-      for (const img of imagesData as any[]) {
-        if (img?.id && img?.url) {
-          imageUrlById[String(img.id)] = String(img.url);
-        }
+    for (const img of (imagesData ?? []) as any[]) {
+      if (img?.id && img?.url) {
+        imageUrlById[String(img.id)] = String(img.url);
+      }
+    }
+  }
+
+  // ✅ ROUND ROBIN MIXING
+  const imageGroups = Array.from(byImage.entries())
+    .map(([imgId, caps]) => ({
+      imgId,
+      captions: caps.filter((c) => imageUrlById[imgId]),
+    }))
+    .filter((g) => g.captions.length > 0);
+
+  const mixed: {
+    id: string;
+    content: string;
+    imageUrl: string;
+  }[] = [];
+
+  let stillHasItems = true;
+
+  while (stillHasItems) {
+    stillHasItems = false;
+
+    for (const group of imageGroups) {
+      if (group.captions.length > 0) {
+        const cap = group.captions.shift()!;
+        mixed.push({
+          id: cap.id,
+          content: cap.content,
+          imageUrl: imageUrlById[group.imgId],
+        });
+        stillHasItems = true;
       }
     }
   }
@@ -91,15 +114,13 @@ export default async function ProtectedPage() {
         display: "grid",
         placeItems: "center",
         padding: 24,
-        fontFamily:
-          '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
         background: "#f6f7f9",
       }}
     >
       <section
         style={{
           width: "100%",
-          maxWidth: 560,
+          maxWidth: 760,
           background: "white",
           borderRadius: 16,
           padding: 24,
@@ -109,30 +130,19 @@ export default async function ProtectedPage() {
       >
         <div style={{ display: "flex", justifyContent: "space-between" }}>
           <div>
-            <h1 style={{ margin: 0, fontSize: 28, letterSpacing: -0.3 }}>
-              Protected
-            </h1>
-            <p style={{ marginTop: 10, color: "#444" }}>
-              Signed in as: <strong>{user.email}</strong>
-            </p>
+            <h1 style={{ margin: 0 }}>Protected</h1>
+            <p>Signed in as: {user.email}</p>
           </div>
-
-          <div style={{ marginTop: 6 }}>
-            <SignOutButton />
-          </div>
+          <SignOutButton />
         </div>
 
-        <hr style={{ margin: "22px 0", opacity: 0.25 }} />
+        <hr style={{ margin: "20px 0" }} />
 
-        <h2 style={{ margin: 0, fontSize: 18 }}>Rate captions</h2>
-
-        <CaptionRater
-          captions={(captions ?? []).map((c: any) => ({
-            id: c.id,
-            content: c.content,
-            imageUrl: c.image_id ? imageUrlById[String(c.image_id)] ?? null : null,
-          }))}
-        />
+        {mixed.length === 0 ? (
+          <p>No captions with images found.</p>
+        ) : (
+          <CaptionRater captions={mixed} />
+        )}
       </section>
     </main>
   );
