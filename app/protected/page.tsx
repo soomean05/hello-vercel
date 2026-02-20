@@ -47,10 +47,42 @@ export default async function ProtectedPage() {
     );
   }
 
-  // Fetch captions (no ordering to avoid missing columns)
+  // 1) Fetch captions with image_id
   const { data: captions, error: captionsError } = await supabase
     .from("captions")
-    .select("id, content");
+    .select("id, content, image_id");
+
+  if (captionsError) {
+    return (
+      <main style={{ padding: 24 }}>
+        <p style={{ color: "crimson" }}>
+          Error loading captions: {captionsError.message}
+        </p>
+      </main>
+    );
+  }
+
+  // 2) Fetch image urls for those image_ids
+  const imageIds = Array.from(
+    new Set((captions ?? []).map((c: any) => c.image_id).filter(Boolean))
+  );
+
+  const imageUrlById: Record<string, string> = {};
+
+  if (imageIds.length > 0) {
+    const { data: imagesData, error: imagesError } = await supabase
+      .from("images")
+      .select("id, url")
+      .in("id", imageIds);
+
+    if (!imagesError && imagesData) {
+      for (const img of imagesData as any[]) {
+        if (img?.id && img?.url) {
+          imageUrlById[String(img.id)] = String(img.url);
+        }
+      }
+    }
+  }
 
   return (
     <main
@@ -94,18 +126,13 @@ export default async function ProtectedPage() {
 
         <h2 style={{ margin: 0, fontSize: 18 }}>Rate captions</h2>
 
-        {captionsError ? (
-          <p style={{ marginTop: 10, color: "crimson" }}>
-            Error loading captions: {captionsError.message}
-          </p>
-        ) : (
-          <CaptionRater
-            captions={(captions ?? []).map((c: any) => ({
-              id: c.id,
-              content: c.content,
-            }))}
-          />
-        )}
+        <CaptionRater
+          captions={(captions ?? []).map((c: any) => ({
+            id: c.id,
+            content: c.content,
+            imageUrl: c.image_id ? imageUrlById[String(c.image_id)] ?? null : null,
+          }))}
+        />
       </section>
     </main>
   );
