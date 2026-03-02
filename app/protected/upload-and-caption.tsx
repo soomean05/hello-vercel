@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 
 const ACCEPT =
   "image/jpeg,image/jpg,image/png,image/webp,image/gif,image/heic";
@@ -28,6 +29,8 @@ function extractCaptionText(c: any): string {
 }
 
 export default function UploadAndCaption() {
+  const router = useRouter();
+
   const [file, setFile] = useState<File | null>(null);
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState<string>("");
@@ -110,7 +113,13 @@ export default function UploadAndCaption() {
       if (!s4.ok) throw new Error(s4json?.error ?? JSON.stringify(s4json));
 
       const list = Array.isArray(s4json) ? s4json : s4json?.captions;
-      setCaptions(Array.isArray(list) ? list : Array.isArray(s4json) ? s4json : [s4json]);
+      setCaptions(
+        Array.isArray(list)
+          ? list
+          : Array.isArray(s4json)
+          ? s4json
+          : [s4json]
+      );
 
       setStatus("Done ✅");
     } catch (e: any) {
@@ -266,6 +275,29 @@ export default function UploadAndCaption() {
                 {extractCaptionText(c)}
               </div>
             ))}
+          </div>
+
+          {/* ✅ NEW: navigation to ratings */}
+          <div style={{ marginTop: 18, textAlign: "center" }}>
+            <button
+              type="button"
+              onClick={() => router.push("/protected/ratings")}
+              style={{
+                padding: "10px 16px",
+                borderRadius: 12,
+                border: "none",
+                background: "#222",
+                color: "white",
+                cursor: "pointer",
+              }}
+            >
+              Go Rate Captions →
+            </button>
+
+            <div style={{ marginTop: 8, fontSize: 12, color: "#666" }}>
+              If you don’t see your captions there, your Ratings page may be using
+              a separate caption pool.
+            </div>
           </div>
         </div>
       )}
