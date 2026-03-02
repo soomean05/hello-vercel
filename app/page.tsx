@@ -45,19 +45,19 @@ export default function HomePage() {
               marginBottom: 14,
             }}
           >
-            <span>🧠</span>
-            <span>Caption Rating Demo</span>
+            <span>🧪</span>
+            <span>Caption Pipeline Demo</span>
           </div>
 
           <h1 style={{ margin: 0, fontSize: 42, letterSpacing: -0.6, lineHeight: 1.05 }}>
-            Rate captions fast.
+            Upload an image.
             <br />
-            Help the model learn.
+            Get captions instantly.
           </h1>
 
           <p style={{ marginTop: 14, fontSize: 16, color: "#444", lineHeight: 1.6 }}>
-            Sign in to rate captions one-by-one with a quick 👍 or 👎. Your vote is saved to the
-            database and tied to your account.
+            This app uploads an image using a presigned URL, registers it with the pipeline,
+            and generates multiple captions via the AlmostCrackd staging API.
           </p>
 
           <div style={{ marginTop: 18, display: "flex", gap: 12, flexWrap: "wrap" }}>
@@ -76,7 +76,7 @@ export default function HomePage() {
                 fontWeight: 650,
               }}
             >
-              Start rating →
+              Open pipeline →
             </a>
 
             <a
@@ -100,7 +100,7 @@ export default function HomePage() {
           </div>
 
           <div style={{ marginTop: 16, fontSize: 12, color: "#777" }}>
-            Tip: If you’re not signed in, you’ll be prompted to log in.
+            Tip: If you’re not signed in, you’ll be prompted to log in first.
           </div>
         </div>
 
@@ -135,49 +135,45 @@ export default function HomePage() {
               <div style={{ textAlign: "center", color: "#222" }}>
                 <div style={{ fontSize: 40 }}>🖼️</div>
                 <div style={{ marginTop: 6, fontSize: 12, color: "#555" }}>
-                  Image preview
+                  Upload preview
                 </div>
               </div>
             </div>
 
             <div style={{ padding: 14 }}>
-              <div style={{ fontSize: 15, lineHeight: 1.4 }}>
-                “When your outfit screams ‘I’m a king’ but your personality says ‘peasant’.”
+              <div style={{ fontSize: 12, color: "#777", marginBottom: 6 }}>
+                Example output:
               </div>
 
-              <div style={{ marginTop: 12, display: "flex", gap: 10 }}>
+              <div style={{ display: "grid", gap: 8 }}>
                 <div
                   style={{
-                    width: 40,
-                    height: 40,
-                    borderRadius: "50%",
-                    border: "1px solid rgba(0,0,0,0.12)",
-                    display: "grid",
-                    placeItems: "center",
-                    background: "white",
-                    fontSize: 18,
+                    padding: "10px 12px",
+                    borderRadius: 12,
+                    background: "#fafafa",
+                    border: "1px solid #eee",
+                    fontSize: 14,
+                    lineHeight: 1.35,
                   }}
                 >
-                  👍
+                  “When your coach says ‘relax’ mid-match and you instantly forget how to breathe.”
                 </div>
                 <div
                   style={{
-                    width: 40,
-                    height: 40,
-                    borderRadius: "50%",
-                    border: "1px solid rgba(0,0,0,0.12)",
-                    display: "grid",
-                    placeItems: "center",
-                    background: "white",
-                    fontSize: 18,
+                    padding: "10px 12px",
+                    borderRadius: 12,
+                    background: "#fafafa",
+                    border: "1px solid #eee",
+                    fontSize: 14,
+                    lineHeight: 1.35,
                   }}
                 >
-                  👎
+                  “POV: you’re locked in… until someone starts yelling advice from the stands.”
                 </div>
               </div>
 
               <div style={{ marginTop: 10, fontSize: 12, color: "#777" }}>
-                Preview only — sign in to vote.
+                Static preview — real captions appear after upload.
               </div>
             </div>
           </div>
