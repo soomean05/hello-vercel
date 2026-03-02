@@ -281,7 +281,7 @@ export default function UploadAndCaption() {
           <div style={{ marginTop: 18, textAlign: "center" }}>
             <button
               type="button"
-              onClick={() => router.push("/protected/ratings")}
+              onClick={() => router.push("/protected")}
               style={{
                 padding: "10px 16px",
                 borderRadius: 12,
