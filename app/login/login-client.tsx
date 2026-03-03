@@ -21,6 +21,13 @@ export default function LoginClient({ next }: { next: string }) {
     setMsg(null);
     setBusy(true);
     try {
+      // Set next_path cookie before OAuth so callback can redirect to desired page
+      await fetch("/api/auth/set-next", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ next }),
+      });
+
       const redirectTo = `${window.location.origin}/auth/callback`;
 
       const { error } = await supabase.auth.signInWithOAuth({

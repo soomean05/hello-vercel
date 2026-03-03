@@ -22,7 +22,7 @@ export async function GET(request: Request) {
   const safeNext =
     nextPath && nextPath.startsWith("/") && !nextPath.startsWith("//")
       ? nextPath
-      : "/protected";
+      : "/rate";
 
   return NextResponse.redirect(new URL(safeNext, url.origin));
 }

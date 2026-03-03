@@ -6,9 +6,9 @@ import LoginClient from "./login-client";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 function safeNextPath(input: unknown): string {
-  if (typeof input !== "string") return "/protected";
-  if (!input.startsWith("/")) return "/protected";
-  if (input.startsWith("//")) return "/protected";
+  if (typeof input !== "string") return "/rate";
+  if (!input.startsWith("/")) return "/rate";
+  if (input.startsWith("//")) return "/rate";
   return input;
 }
 
@@ -17,7 +17,7 @@ export default async function LoginPage({
 }: {
   searchParams?: { next?: string };
 }) {
-  const next = safeNextPath(searchParams?.next ?? "/protected");
+  const next = safeNextPath(searchParams?.next ?? "/rate");
 
   // next_path cookie is set by middleware (pages cannot modify cookies).
   // If already logged in (SSR cookies), skip the login UI.
