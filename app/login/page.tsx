@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 
-export default function LoginPage() {
+function LoginInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const next = searchParams.get("next") || "/rate";
@@ -16,14 +16,12 @@ export default function LoginPage() {
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
 
-  // If already logged in, go to next
   useEffect(() => {
     (async () => {
       const { data } = await supabase.auth.getSession();
       if (data.session) router.replace(next);
     })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [router, next]);
 
   async function submit() {
     setMsg(null);
@@ -39,12 +37,12 @@ export default function LoginPage() {
         return;
       }
 
-      // signup
       const { error } = await supabase.auth.signUp({ email, password });
       if (error) throw error;
 
-      // Some Supabase projects require email confirmation
-      setMsg("Account created. If email confirmation is required, check your email. Otherwise you can sign in now.");
+      setMsg(
+        "Account created. If email confirmation is required, check your email. Otherwise you can sign in now."
+      );
       setMode("signin");
     } catch (e: any) {
       setMsg(e?.message ?? String(e));
@@ -148,5 +146,13 @@ export default function LoginPage() {
         </section>
       </div>
     </main>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div style={{ padding: 24 }}>Loading…</div>}>
+      <LoginInner />
+    </Suspense>
   );
 }
