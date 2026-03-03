@@ -39,5 +39,16 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/app", "/app/(.*)", "/protected", "/protected/(.*)", "/rate", "/upload"],
+  matcher: [
+    "/app",
+    "/app/(.*)",
+    "/protected",
+    "/protected/(.*)",
+    "/rate",
+    "/upload",
+    "/api/auth/token",
+    "/api/vote",
+    "/api/pipeline/(.*)",
+    "/api/captions/save",
+  ],
 };

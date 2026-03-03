@@ -1,5 +1,5 @@
-import { NextResponse } from "next/server";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { NextRequest, NextResponse } from "next/server";
+import { createSupabaseServerClientFromRequest } from "@/lib/supabase/server";
 
 function getUserIdFromToken(token: string): string | null {
   try {
@@ -13,10 +13,10 @@ function getUserIdFromToken(token: string): string | null {
   }
 }
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   const authHeader = req.headers.get("authorization");
   const token = authHeader?.replace(/^Bearer\s+/i, "")?.trim();
-  const supabase = await createSupabaseServerClient();
+  const supabase = createSupabaseServerClientFromRequest(req);
   let userId: string | null = null;
 
   if (token) {

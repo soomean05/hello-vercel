@@ -1,10 +1,10 @@
-import { NextResponse } from "next/server";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { NextRequest, NextResponse } from "next/server";
+import { createSupabaseServerClientFromRequest } from "@/lib/supabase/server";
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   let token = req.headers.get("authorization")?.replace(/^Bearer\s+/i, "")?.trim();
   if (!token) {
-    const supabase = await createSupabaseServerClient();
+    const supabase = createSupabaseServerClientFromRequest(req);
     const { data } = await supabase.auth.getSession();
     token = data.session?.access_token ?? undefined;
   }
