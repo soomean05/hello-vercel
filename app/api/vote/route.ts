@@ -1,67 +1,68 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseServerClientFromRequest } from "@/lib/supabase/server";
 
-function getUserIdFromToken(token: string): string | null {
-  try {
-    const b64 = token.split(".")[1];
-    if (!b64) return null;
-    const json = Buffer.from(b64, "base64url").toString("utf8");
-    const payload = JSON.parse(json);
-    return payload?.sub ?? null;
-  } catch {
-    return null;
-  }
-}
-
 export async function POST(req: NextRequest) {
-  const authHeader = req.headers.get("authorization");
-  const token = authHeader?.replace(/^Bearer\s+/i, "")?.trim();
   const supabase = createSupabaseServerClientFromRequest(req);
-  let userId: string | null = null;
+  const { data: { user }, error: userErr } = await supabase.auth.getUser();
+  if (userErr || !user) return NextResponse.json({ error: "Not logged in" }, { status: 401 });
 
-  if (token) userId = getUserIdFromToken(token);
-  if (!userId) {
-    const { data } = await supabase.auth.getUser();
-    userId = data.user?.id ?? null;
-  }
-  if (!userId) return NextResponse.json({ error: "Not logged in" }, { status: 401 });
-
-  let body: any;
+  let body: Record<string, unknown>;
   try {
     body = await req.json();
   } catch {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
-  const caption_id = body.caption_id;
-  const vote = body.vote;
+  const captionId = (body.captionId ?? body.caption_id) as string | undefined;
+  const direction = body.direction as "up" | "down" | undefined;
+  const voteValueFromBody = body.voteValue ?? body.vote;
 
-  if (!caption_id || (vote !== 1 && vote !== -1)) {
+  let voteValue: number;
+  if (direction === "up") voteValue = 1;
+  else if (direction === "down") voteValue = -1;
+  else if (typeof voteValueFromBody === "number" && (voteValueFromBody === 1 || voteValueFromBody === -1)) {
+    voteValue = voteValueFromBody;
+  } else {
     return NextResponse.json(
-      { error: "Expected caption_id and vote (1 or -1)" },
+      { error: "Expected captionId and direction (up|down) or voteValue (1|-1)" },
       { status: 400 }
     );
   }
 
-  const now = new Date().toISOString();
-
-  // Your schema: vote_value, UNIQUE(caption_id, user_id)
-  const { error } = await supabase
-    .from("caption_votes")
-    .upsert(
-      {
-        caption_id,
-        user_id: userId,
-        vote_value: vote,
-        created_datetime_utc: now,
-        modified_datetime_utc: now,
-      },
-      { onConflict: "caption_id,user_id" }
-    );
-
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 400 });
+  const captionIdStr = captionId != null ? String(captionId) : "";
+  if (!captionIdStr) {
+    return NextResponse.json({ error: "Missing captionId" }, { status: 400 });
   }
 
-  return NextResponse.json({ ok: true }, { status: 200 });
+  const payload = {
+    caption_id: captionIdStr,
+    profile_id: user.id,
+    vote_value: voteValue,
+    user_id: user.id,
+    value: voteValue,
+  };
+
+  const { error: insertErr } = await supabase.from("caption_votes").insert(payload);
+
+  if (insertErr) {
+    if (insertErr.code === "23505") {
+      const { error: updateErr } = await supabase
+        .from("caption_votes")
+        .update({
+          vote_value: voteValue,
+          value: voteValue,
+          modified_datetime_utc: new Date().toISOString(),
+        })
+        .eq("profile_id", user.id)
+        .eq("caption_id", captionIdStr);
+
+      if (updateErr) {
+        return NextResponse.json({ error: updateErr.message }, { status: 400 });
+      }
+      return NextResponse.json({ ok: true, voteValue, updated: true }, { status: 200 });
+    }
+    return NextResponse.json({ error: insertErr.message }, { status: 400 });
+  }
+
+  return NextResponse.json({ ok: true, voteValue }, { status: 200 });
 }

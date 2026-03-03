@@ -33,7 +33,7 @@ export default function VoteButtons({
         method: "POST",
         headers,
         credentials: "include",
-        body: JSON.stringify({ caption_id: captionId, vote: value }),
+        body: JSON.stringify({ captionId, direction: value === 1 ? "up" : "down" }),
       });
 
       if (res.ok) {
