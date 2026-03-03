@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
@@ -22,11 +22,18 @@ export default function UploadClient() {
   const [busy, setBusy] = useState(false);
   const [completedStep, setCompletedStep] = useState<Step>(null);
   const [file, setFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   const [cdnUrl, setCdnUrl] = useState<string | null>(null);
   const [imageId, setImageId] = useState<string | null>(null);
   const [captions, setCaptions] = useState<any[]>([]);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+    };
+  }, [previewUrl]);
 
   async function signOut() {
     await fetch("/api/auth/signout", { method: "POST" }).catch(() => null);
@@ -155,12 +162,59 @@ export default function UploadClient() {
             type="file"
             accept="image/*"
             onChange={(e) => {
-              setFile(e.target.files?.[0] ?? null);
+              const f = e.target.files?.[0] ?? null;
+              if (previewUrl) URL.revokeObjectURL(previewUrl);
+              setFile(f);
               setError(null);
+              if (f) {
+                const url = URL.createObjectURL(f);
+                setPreviewUrl(url);
+              } else {
+                setPreviewUrl(null);
+              }
             }}
             style={{ display: "none" }}
             disabled={busy}
           />
+
+          {/* Preview area */}
+          <div
+            style={{
+              marginBottom: 14,
+              padding: 16,
+              borderRadius: 12,
+              background: previewUrl ? "white" : "#fafafa",
+              border: previewUrl ? "1px solid #eee" : "2px dashed #ddd",
+              minHeight: 120,
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            {previewUrl ? (
+              <>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={previewUrl}
+                  alt="Preview"
+                  style={{
+                    width: "100%",
+                    maxHeight: 420,
+                    objectFit: "contain",
+                    borderRadius: 12,
+                  }}
+                />
+                {file && (
+                  <div style={{ marginTop: 10, fontSize: 14, color: "#555" }}>
+                    {file.name} · {file.type}
+                  </div>
+                )}
+              </>
+            ) : (
+              <span style={{ color: "#999", fontSize: 14 }}>Choose an image to preview</span>
+            )}
+          </div>
 
           <div style={{ marginBottom: 14 }}>
             <button
