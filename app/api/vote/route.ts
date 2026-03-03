@@ -37,9 +37,10 @@ export async function POST(req: NextRequest) {
   const payload = {
     caption_id: captionIdStr,
     profile_id: user.id,
-    vote_value: voteValue,
     user_id: user.id,
+    vote_value: voteValue,
     value: voteValue,
+    created_datetime_utc: new Date().toISOString(),
   };
 
   const { error: insertErr } = await supabase.from("caption_votes").insert(payload);
@@ -59,10 +60,10 @@ export async function POST(req: NextRequest) {
       if (updateErr) {
         return NextResponse.json({ error: updateErr.message }, { status: 400 });
       }
-      return NextResponse.json({ ok: true, voteValue, updated: true }, { status: 200 });
+      return NextResponse.json({ ok: true }, { status: 200 });
     }
     return NextResponse.json({ error: insertErr.message }, { status: 400 });
   }
 
-  return NextResponse.json({ ok: true, voteValue }, { status: 200 });
+  return NextResponse.json({ ok: true }, { status: 200 });
 }
