@@ -13,7 +13,7 @@ export default async function AppPage() {
 
   const { data: captions, error: capErr } = await supabase
     .from("captions")
-    .select("id, content, image_id, image_url")
+    .select("*")
     .limit(200);
 
   const captionRows = (captions ?? []) as any[];

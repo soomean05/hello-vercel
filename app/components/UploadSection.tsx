@@ -1,6 +1,8 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { useRouter } from "next/navigation";
+import { createBrowserClient } from "@/lib/supabase/client";
 
 const SUPPORTED = new Set([
   "image/jpeg",
@@ -22,6 +24,7 @@ const card: React.CSSProperties = {
 };
 
 export default function UploadSection() {
+  const router = useRouter();
   const fileRef = useRef<HTMLInputElement | null>(null);
   const [busy, setBusy] = useState(false);
   const [completedStep, setCompletedStep] = useState<Step>(null);
@@ -47,10 +50,21 @@ export default function UploadSection() {
     setCompletedStep(null);
 
     try {
+      const supabase = createBrowserClient();
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+      if (!token) {
+        setError("Not authenticated. Please sign in again.");
+        setBusy(false);
+        return;
+      }
+
+      const authHeaders = { Authorization: `Bearer ${token}` };
+
       setCompletedStep(1);
       const r1 = await fetch("/api/pipeline/generate-presigned-url", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...authHeaders },
         body: JSON.stringify({ contentType: file.type }),
       });
       const j1 = await r1.json().catch(() => ({}));
@@ -71,7 +85,7 @@ export default function UploadSection() {
       setCompletedStep(3);
       const r3 = await fetch("/api/pipeline/upload-image-from-url", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...authHeaders },
         body: JSON.stringify({ imageUrl: cdnUrlFromApi, isCommonUse: false }),
       });
       const j3 = await r3.json().catch(() => ({}));
@@ -82,14 +96,26 @@ export default function UploadSection() {
       setCompletedStep(4);
       const r4 = await fetch("/api/pipeline/generate-captions", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...authHeaders },
         body: JSON.stringify({ imageId: imageIdFromApi }),
       });
       const j4 = await r4.json().catch(() => ({}));
       if (!r4.ok) throw new Error(j4.error || JSON.stringify(j4));
 
       const list = Array.isArray(j4) ? j4 : j4.captions ?? [];
-      setCaptions(list.slice(0, 5)); // exactly 5 captions
+      const captionList = list.slice(0, 5);
+      setCaptions(captionList);
+
+      // Persist to DB so they appear in rate feed
+      const textList = captionList.map((c: any) => c?.content ?? c?.text ?? c?.caption ?? (typeof c === "string" ? c : JSON.stringify(c)));
+      if (textList.length > 0) {
+        const saveRes = await fetch("/api/captions/save", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", ...authHeaders },
+          body: JSON.stringify({ imageUrl: cdnUrlFromApi, captions: textList }),
+        });
+        if (saveRes.ok) router.refresh();
+      }
     } catch (e: any) {
       setError(e.message ?? "Pipeline failed");
     } finally {

@@ -2,9 +2,12 @@ import { NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export async function POST(req: Request) {
-  const supabase = await createSupabaseServerClient();
-  const { data: sessionData } = await supabase.auth.getSession();
-  const token = sessionData.session?.access_token;
+  let token = req.headers.get("authorization")?.replace(/^Bearer\s+/i, "")?.trim();
+  if (!token) {
+    const supabase = await createSupabaseServerClient();
+    const { data } = await supabase.auth.getSession();
+    token = data.session?.access_token ?? undefined;
+  }
   if (!token) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
 
   const body = await req.json().catch(() => null);
