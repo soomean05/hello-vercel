@@ -1,21 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 
 export default function LoginClient({ next }: { next: string }) {
-  const router = useRouter();
-
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
-
-  useEffect(() => {
-    (async () => {
-      const { data } = await supabase.auth.getSession();
-      if (data.session) router.replace(next);
-    })();
-  }, [router, next]);
 
   async function continueWithGoogle() {
     setMsg(null);
