@@ -1,17 +1,13 @@
 import Link from "next/link";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { fetchCaptionsSafe } from "@/lib/fetchCaptions";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-type CaptionRow = Record<string, unknown> & { id?: string; text?: string; image_id?: string };
-
 export default async function ListPage() {
   const supabase = await createSupabaseServerClient();
-  const { data: rows, error } = await supabase
-    .from("captions")
-    .select("*")
-    .limit(20);
+  const { items: rows, error } = await fetchCaptionsSafe(supabase, 20);
 
   return (
     <main
@@ -62,11 +58,27 @@ export default async function ListPage() {
             marginBottom: 16,
           }}
         >
-          Error: {error.message}
+          Error: {error}
+          <Link
+            href="/list"
+            style={{
+              display: "inline-block",
+              marginTop: 12,
+              padding: "8px 14px",
+              borderRadius: 10,
+              background: "#111",
+              color: "white",
+              textDecoration: "none",
+              fontWeight: 600,
+              fontSize: 13,
+            }}
+          >
+            Retry
+          </Link>
         </div>
       )}
 
-      {!error && (!rows || rows.length === 0) && (
+      {!error && rows.length === 0 && (
         <div
           style={{
             padding: 24,
@@ -79,14 +91,14 @@ export default async function ListPage() {
         </div>
       )}
 
-      {!error && rows && rows.length > 0 && (
+      {!error && rows.length > 0 && (
         <div
           style={{
             display: "grid",
             gap: 12,
           }}
         >
-          {(rows as CaptionRow[]).map((row, i) => (
+          {rows.map((row, i) => (
             <div
               key={row.id ?? i}
               style={{
@@ -97,20 +109,12 @@ export default async function ListPage() {
                 boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
               }}
             >
-              {row.text != null && (
-                <p style={{ margin: 0, fontSize: 15, lineHeight: 1.5 }}>{String(row.text)}</p>
+              <p style={{ margin: 0, fontSize: 15, lineHeight: 1.5 }}>{row.content}</p>
+              {row.imageUrl && (
+                <p style={{ margin: "8px 0 0 0", fontSize: 12, color: "#666" }}>
+                  Image: {row.imageUrl}
+                </p>
               )}
-              <pre
-                style={{
-                  margin: 0,
-                  marginTop: 8,
-                  fontSize: 12,
-                  color: "#666",
-                  overflowX: "auto",
-                }}
-              >
-                {JSON.stringify(row, null, 2)}
-              </pre>
             </div>
           ))}
         </div>

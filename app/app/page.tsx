@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import AppClient from "./app-client";
+import { fetchCaptionsSafe } from "@/lib/fetchCaptions";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -11,43 +12,7 @@ export default async function AppPage() {
   const { data } = await supabase.auth.getUser();
   if (!data.user) redirect("/");
 
-  const { data: captions, error: capErr } = await supabase
-    .from("captions")
-    .select("*")
-    .limit(200);
-
-  const captionRows = (captions ?? []) as any[];
-  let urlByImageId = new Map<string, string>();
-
-  if (capErr) {
-    // Still render page; RateSection will show empty state
-  } else if (captionRows.some((c) => !c?.image_url) && captionRows.some((c) => c?.image_id)) {
-    const imageIds = Array.from(
-      new Set(captionRows.map((c) => c?.image_id).filter(Boolean).map(String))
-    );
-    if (imageIds.length > 0) {
-      const { data: images } = await supabase
-        .from("images")
-        .select("id, url")
-        .in("id", imageIds);
-      (images ?? []).forEach((im: any) => {
-        if (im?.id && im?.url) urlByImageId.set(String(im.id), String(im.url));
-      });
-    }
-  }
-
-  const items = capErr
-    ? []
-    : captionRows
-        .map((c) => {
-          const id = c?.id;
-          const content = String(c?.content ?? c?.text ?? "");
-          const imageUrl =
-            (c?.image_url as string | null) ?? urlByImageId.get(String(c?.image_id)) ?? null;
-          if (!id || !content) return null;
-          return { id, content, imageUrl };
-        })
-        .filter(Boolean) as { id: string | number; content: string; imageUrl: string | null }[];
+  const { items, error: capErr } = await fetchCaptionsSafe(supabase, 200);
 
   return (
     <main
@@ -101,7 +66,36 @@ export default async function AppPage() {
       </header>
 
       <div style={{ maxWidth: 720, margin: "0 auto", padding: 24 }}>
-        <AppClient items={items} />
+        {capErr && (
+          <div
+            style={{
+              padding: 16,
+              marginBottom: 16,
+              background: "#fff0f0",
+              borderRadius: 12,
+              color: "#c00",
+            }}
+          >
+            Error loading captions: {capErr}
+            <Link
+              href="/app"
+              style={{
+                display: "inline-block",
+                marginTop: 12,
+                padding: "8px 14px",
+                borderRadius: 10,
+                background: "#111",
+                color: "white",
+                textDecoration: "none",
+                fontWeight: 600,
+                fontSize: 13,
+              }}
+            >
+              Retry
+            </Link>
+          </div>
+        )}
+        <AppClient items={capErr ? [] : items} />
       </div>
     </main>
   );

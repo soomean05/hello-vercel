@@ -2,6 +2,8 @@ import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import Navbar from "../components/Navbar";
 import RateClient from "./rate-client";
+import { fetchCaptionsSafe } from "@/lib/fetchCaptions";
+import Link from "next/link";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -13,54 +15,47 @@ export default async function RatePage() {
   const email = userRes.user?.email;
   if (!userRes.user || !email) redirect("/");
 
-  const { data: captions, error: capErr } = await supabase
-    .from("captions")
-    .select("id, content, image_id, image_url")
-    .limit(200);
+  const { items, error: capErr } = await fetchCaptionsSafe(supabase, 200);
 
   if (capErr) {
     return (
       <main style={{ padding: 24, fontFamily: "system-ui" }}>
-        <div style={{ color: "crimson", fontWeight: 900 }}>Error loading captions</div>
-        <pre style={{ whiteSpace: "pre-wrap" }}>{capErr.message}</pre>
+        <Navbar />
+        <div
+          style={{
+            maxWidth: 600,
+            margin: "0 auto",
+            padding: 24,
+            background: "#fff0f0",
+            borderRadius: 12,
+            border: "1px solid #fcc",
+          }}
+        >
+          <div style={{ color: "crimson", fontWeight: 900, marginBottom: 8 }}>
+            Error loading captions
+          </div>
+          <pre style={{ whiteSpace: "pre-wrap", fontSize: 14, marginBottom: 16 }}>
+            {capErr}
+          </pre>
+          <Link
+            href="/rate"
+            style={{
+              display: "inline-block",
+              padding: "10px 16px",
+              borderRadius: 10,
+              background: "#111",
+              color: "white",
+              textDecoration: "none",
+              fontWeight: 600,
+              fontSize: 14,
+            }}
+          >
+            Retry
+          </Link>
+        </div>
       </main>
     );
   }
-
-  const captionRows = (captions ?? []) as any[];
-
-  // Try to map captions → items with an imageUrl. If caption already has image_url, use it;
-  // otherwise join via images table using image_id.
-  const needsImageJoin = captionRows.some((c) => !c?.image_url) && captionRows.some((c) => c?.image_id);
-
-  let urlByImageId = new Map<string, string>();
-  if (needsImageJoin) {
-    const imageIds = Array.from(
-      new Set(captionRows.map((c) => c?.image_id).filter(Boolean).map(String))
-    );
-
-    if (imageIds.length > 0) {
-      const { data: images } = await supabase
-        .from("images")
-        .select("id, url")
-        .in("id", imageIds);
-
-      (images ?? []).forEach((im: any) => {
-        if (im?.id && im?.url) urlByImageId.set(String(im.id), String(im.url));
-      });
-    }
-  }
-
-  const items = captionRows
-    .map((c) => {
-      const id = c?.id;
-      const content = String(c?.content ?? c?.text ?? "");
-      const imageUrl = (c?.image_url as string | null) ?? urlByImageId.get(String(c?.image_id)) ?? null;
-
-      if (!id || !content) return null;
-      return { id, content, imageUrl };
-    })
-    .filter(Boolean) as { id: string | number; content: string; imageUrl: string | null }[];
 
   return (
     <>
