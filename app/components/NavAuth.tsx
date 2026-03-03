@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { supabase } from "@/lib/supabase/client";
+import { useMemo } from "react";
+import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 const linkStyle = {
   padding: "8px 14px",
@@ -16,6 +17,8 @@ const linkStyle = {
 } as const;
 
 export default function NavAuth({ signedIn }: { signedIn: boolean }) {
+  const supabase = useMemo(() => createSupabaseBrowserClient(), []);
+
   const handleSignIn = async () => {
     const origin =
       typeof window !== "undefined"

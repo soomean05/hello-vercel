@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { supabase } from "@/lib/supabase/client";
+import { useMemo } from "react";
+import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 const btnBase = {
   padding: "10px 20px",
@@ -14,6 +15,8 @@ const btnBase = {
 } as const;
 
 export default function HomeClient({ email }: { email: string | null }) {
+  const supabase = useMemo(() => createSupabaseBrowserClient(), []);
+
   const handleSignIn = async () => {
     const origin =
       typeof window !== "undefined"

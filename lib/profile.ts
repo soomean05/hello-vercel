@@ -1,6 +1,6 @@
-import { supabase } from "@/lib/supabaseClient";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
-export async function getProfileIdFromSession(): Promise<string> {
+export async function getProfileIdFromSession(supabase: SupabaseClient): Promise<string> {
   const { data, error } = await supabase.auth.getSession();
   if (error) throw error;
 

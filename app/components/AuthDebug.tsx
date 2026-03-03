@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase/client";
+import { useEffect, useMemo, useState } from "react";
+import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 export default function AuthDebug() {
+  const supabase = useMemo(() => createSupabaseBrowserClient(), []);
   const [session, setSession] = useState<{ user?: { email?: string }; access_token?: string } | null>(null);
 
   useEffect(() => {

@@ -1,8 +1,9 @@
 "use client";
 
-import { supabase } from "@/lib/supabase/client";
+import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 export async function getAuthToken(): Promise<string | null> {
+  const supabase = createSupabaseBrowserClient();
   const { data } = await supabase.auth.getSession();
   if (data.session?.access_token) return data.session.access_token;
 

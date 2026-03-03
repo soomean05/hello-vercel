@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import VoteButtons from "@/app/components/VoteButtons";
+import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 type Item = {
   id: string | number;
@@ -25,8 +26,17 @@ export default function RateClient({
   email: string;
   items: Item[];
 }) {
+  const supabase = useMemo(() => createSupabaseBrowserClient(), []);
+  const [sessionMissing, setSessionMissing] = useState<boolean | null>(null);
+
   const randomized = useMemo(() => shuffle(items), [items]);
   const [idx, setIdx] = useState(0);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => {
+      setSessionMissing(!data.session);
+    });
+  }, [supabase]);
 
   const current = randomized[idx];
 
@@ -149,6 +159,42 @@ export default function RateClient({
             <a href="/upload" style={navBtn}>Upload</a>
           </div>
         </div>
+
+        {sessionMissing === true && (
+          <div
+            style={{
+              marginBottom: 14,
+              padding: 12,
+              borderRadius: 12,
+              background: "#fff8e6",
+              border: "1px solid #e6d68a",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              flexWrap: "wrap",
+              gap: 10,
+            }}
+          >
+            <span style={{ fontSize: 14, color: "#666" }}>
+              Session missing in client. Refresh page.
+            </span>
+            <button
+              type="button"
+              onClick={() => window.location.reload()}
+              style={{
+                padding: "8px 14px",
+                borderRadius: 10,
+                border: "1px solid rgba(0,0,0,0.12)",
+                background: "white",
+                fontWeight: 600,
+                cursor: "pointer",
+                fontSize: 14,
+              }}
+            >
+              Refresh
+            </button>
+          </div>
+        )}
 
         <div style={mainCard}>
         {current?.imageUrl ? (

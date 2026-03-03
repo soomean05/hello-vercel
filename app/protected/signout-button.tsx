@@ -1,8 +1,11 @@
 "use client";
 
-import { supabase } from "@/lib/supabase/client";
+import { useMemo } from "react";
+import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 export default function SignOutButton() {
+  const supabase = useMemo(() => createSupabaseBrowserClient(), []);
+
   const signOut = async () => {
     await supabase.auth.signOut();
     window.location.href = "/";

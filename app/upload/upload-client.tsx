@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 const SUPPORTED = new Set([
   "image/jpeg",
@@ -18,6 +19,7 @@ type Step = 1 | 2 | 3 | 4 | null;
 export default function UploadClient() {
   const router = useRouter();
   const fileRef = useRef<HTMLInputElement | null>(null);
+  const supabase = useMemo(() => createSupabaseBrowserClient(), []);
 
   const [busy, setBusy] = useState(false);
   const [completedStep, setCompletedStep] = useState<Step>(null);
@@ -48,6 +50,17 @@ export default function UploadClient() {
       return;
     }
 
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.access_token) {
+      setError("No access token. Refresh.");
+      return;
+    }
+
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${session.access_token}`,
+    };
+
     setBusy(true);
     setError(null);
     setCaptions([]);
@@ -57,7 +70,7 @@ export default function UploadClient() {
       setCompletedStep(1);
       const r1 = await fetch("/api/pipeline/generate-presigned-url", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers,
         body: JSON.stringify({ contentType: file.type }),
       });
       const j1 = await r1.json().catch(() => ({}));
@@ -77,7 +90,7 @@ export default function UploadClient() {
       setCompletedStep(3);
       const r3 = await fetch("/api/pipeline/upload-image-from-url", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers,
         body: JSON.stringify({ imageUrl: cdnUrlFromApi, isCommonUse: false }),
       });
       const j3 = await r3.json().catch(() => ({}));
@@ -88,7 +101,7 @@ export default function UploadClient() {
       setCompletedStep(4);
       const r4 = await fetch("/api/pipeline/generate-captions", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers,
         body: JSON.stringify({ imageId: imageIdFromApi }),
       });
       const j4 = await r4.json().catch(() => ({}));

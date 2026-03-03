@@ -1,2 +1,2 @@
-export { supabase } from "./supabase/client";
+export { createSupabaseBrowserClient } from "./supabase/client";
 

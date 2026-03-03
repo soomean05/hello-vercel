@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { supabase } from "@/lib/supabaseClient";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 function normalizeCaptions(payload: any): string[] {
   const grab = (x: any) =>
@@ -29,6 +29,7 @@ export default function CaptionUploader({
   subtitle = "Uses AlmostCrackd pipeline (presign → upload → register → generate captions).",
   onSaved,
 }: Props) {
+  const supabase = useMemo(() => createSupabaseBrowserClient(), []);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const [file, setFile] = useState<File | null>(null);
