@@ -15,7 +15,7 @@ export default async function RatePage() {
 
   const { data: captions, error: capErr } = await supabase
     .from("captions")
-    .select("id, content, text, image_id, image_url")
+    .select("id, content, image_id, image_url")
     .limit(200);
 
   if (capErr) {
