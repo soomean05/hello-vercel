@@ -6,7 +6,7 @@ export async function POST(req: Request) {
 
   const body = await req.json();
 
-  const r = await fetch("https://api.almostcrackd.ai/pipeline/generate-captions", {
+  const r = await fetch("https://api.almostcrackd.ai/pipeline/upload-image-from-url", {
     method: "POST",
     headers: { Authorization: auth, "Content-Type": "application/json" },
     body: JSON.stringify(body),

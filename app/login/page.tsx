@@ -1,67 +1,152 @@
 "use client";
 
-import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import { useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { supabase } from "@/lib/supabaseClient";
 
 export default function LoginPage() {
-  const supabase = createSupabaseBrowserClient();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const next = searchParams.get("next") || "/rate";
 
-  const signInWithGoogle = async () => {
-    const redirectTo = `${window.location.origin}/auth/callback`; // EXACT
-    await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: { redirectTo },
-    });
-  };
+  const [mode, setMode] = useState<"signin" | "signup">("signin");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState<string | null>(null);
+
+  // If already logged in, go to next
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase.auth.getSession();
+      if (data.session) router.replace(next);
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  async function submit() {
+    setMsg(null);
+    setBusy(true);
+
+    try {
+      if (!email || !password) throw new Error("Enter email and password.");
+
+      if (mode === "signin") {
+        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error) throw error;
+        router.replace(next);
+        return;
+      }
+
+      // signup
+      const { error } = await supabase.auth.signUp({ email, password });
+      if (error) throw error;
+
+      // Some Supabase projects require email confirmation
+      setMsg("Account created. If email confirmation is required, check your email. Otherwise you can sign in now.");
+      setMode("signin");
+    } catch (e: any) {
+      setMsg(e?.message ?? String(e));
+    } finally {
+      setBusy(false);
+    }
+  }
 
   return (
-    <main
-      style={{
-        minHeight: "100vh",
-        display: "grid",
-        placeItems: "center",
-        padding: 24,
-        fontFamily:
-          '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
-        background: "#f6f7f9",
-      }}
-    >
-      <section
-        style={{
-          width: "100%",
-          maxWidth: 420,
-          background: "white",
-          borderRadius: 16,
-          padding: 24,
-          boxShadow: "0 10px 30px rgba(0,0,0,0.08)",
-          border: "1px solid rgba(0,0,0,0.06)",
-        }}
-      >
-        <h1 style={{ margin: 0, fontSize: 28, letterSpacing: -0.3 }}>Login</h1>
-        <p style={{ marginTop: 10, marginBottom: 18, color: "#444", lineHeight: 1.4 }}>
-          You must sign in to access the protected page.
-        </p>
-
-        <button
-          onClick={signInWithGoogle}
+    <main style={{ minHeight: "100vh", padding: 24, fontFamily: "system-ui", background: "#f6f7f9" }}>
+      <div style={{ maxWidth: 520, margin: "0 auto", display: "grid", gap: 14 }}>
+        <header
           style={{
-            width: "100%",
-            padding: "12px 14px",
-            borderRadius: 12,
-            border: "1px solid rgba(0,0,0,0.12)",
-            background: "#111",
-            color: "white",
-            fontSize: 16,
-            cursor: "pointer",
+            padding: 18,
+            borderRadius: 18,
+            background: "white",
+            boxShadow: "0 10px 35px rgba(0,0,0,0.08)",
           }}
         >
-          Sign in with Google
-        </button>
+          <div style={{ fontSize: 24, fontWeight: 900 }}>
+            {mode === "signin" ? "Sign in" : "Create account"}
+          </div>
+          <div style={{ opacity: 0.7, marginTop: 6 }}>Continue to: {next}</div>
+        </header>
 
-        <p style={{ marginTop: 14, fontSize: 12, color: "#666" }}>
-          Redirect URI: <code>/auth/callback</code>
-        </p>
-      </section>
+        <section
+          style={{
+            padding: 18,
+            borderRadius: 18,
+            background: "white",
+            boxShadow: "0 10px 35px rgba(0,0,0,0.08)",
+            display: "grid",
+            gap: 12,
+          }}
+        >
+          <label style={{ display: "grid", gap: 6 }}>
+            <div style={{ fontWeight: 800 }}>Email</div>
+            <input
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="you@columbia.edu"
+              type="email"
+              style={{
+                padding: "12px 14px",
+                borderRadius: 12,
+                border: "1px solid rgba(0,0,0,0.15)",
+                outline: "none",
+              }}
+            />
+          </label>
+
+          <label style={{ display: "grid", gap: 6 }}>
+            <div style={{ fontWeight: 800 }}>Password</div>
+            <input
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="••••••••"
+              type="password"
+              style={{
+                padding: "12px 14px",
+                borderRadius: 12,
+                border: "1px solid rgba(0,0,0,0.15)",
+                outline: "none",
+              }}
+            />
+          </label>
+
+          {msg ? <div style={{ color: msg.includes("created") ? "green" : "crimson" }}>{msg}</div> : null}
+
+          <button
+            onClick={submit}
+            disabled={busy}
+            style={{
+              padding: "12px 14px",
+              borderRadius: 14,
+              border: "1px solid rgba(0,0,0,0.15)",
+              background: "white",
+              fontWeight: 900,
+              cursor: busy ? "not-allowed" : "pointer",
+            }}
+          >
+            {busy ? "Working…" : mode === "signin" ? "Sign in" : "Sign up"}
+          </button>
+
+          <button
+            onClick={() => {
+              setMsg(null);
+              setMode((m) => (m === "signin" ? "signup" : "signin"));
+            }}
+            style={{
+              padding: "10px 14px",
+              borderRadius: 14,
+              border: "1px solid rgba(0,0,0,0.12)",
+              background: "white",
+              fontWeight: 900,
+              cursor: "pointer",
+            }}
+          >
+            {mode === "signin" ? "Need an account? Sign up" : "Already have an account? Sign in"}
+          </button>
+        </section>
+      </div>
     </main>
   );
 }
-
