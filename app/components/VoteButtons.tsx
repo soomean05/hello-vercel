@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { getAuthToken } from "@/app/lib/getAuthToken";
 
 type Vote = 1 | -1;
 
@@ -15,16 +16,23 @@ export default function VoteButtons({
 }) {
   const [loading, setLoading] = useState<Vote | null>(null);
   const [selected, setSelected] = useState<Vote | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   async function submitVote(value: Vote) {
     if (disabled) return;
 
     setLoading(value);
+    setError(null);
 
     try {
+      const token = await getAuthToken();
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      if (token) headers.Authorization = `Bearer ${token}`;
+
       const res = await fetch("/api/vote", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers,
+        credentials: "include",
         body: JSON.stringify({ caption_id: captionId, vote: value }),
       });
 
@@ -35,7 +43,12 @@ export default function VoteButtons({
           onVoted?.();
           setSelected(null);
         }, 250);
+      } else {
+        const data = await res.json().catch(() => ({}));
+        setError(data.error ?? "Vote failed");
       }
+    } catch {
+      setError("Vote failed");
     } finally {
       setLoading(null);
     }
@@ -60,7 +73,11 @@ export default function VoteButtons({
   };
 
   return (
-    <div style={{ marginTop: 12, display: "flex", gap: 12 }}>
+    <div style={{ marginTop: 12, display: "flex", flexDirection: "column", gap: 8 }}>
+      {error && (
+        <span style={{ fontSize: 13, color: "#c00" }}>{error}</span>
+      )}
+      <div style={{ display: "flex", gap: 12 }}>
       <button
         type="button"
         onClick={() => submitVote(1)}
@@ -80,6 +97,7 @@ export default function VoteButtons({
       >
         👎
       </button>
+      </div>
     </div>
   );
 }

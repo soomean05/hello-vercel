@@ -1,11 +1,30 @@
 import { NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
+function getUserIdFromToken(token: string): string | null {
+  try {
+    const b64 = token.split(".")[1];
+    if (!b64) return null;
+    const json = Buffer.from(b64, "base64url").toString("utf8");
+    const payload = JSON.parse(json);
+    return payload?.sub ?? null;
+  } catch {
+    return null;
+  }
+}
+
 export async function POST(req: Request) {
+  const authHeader = req.headers.get("authorization");
+  const token = authHeader?.replace(/^Bearer\s+/i, "")?.trim();
   const supabase = await createSupabaseServerClient();
-  const { data: userRes, error: userErr } = await supabase.auth.getUser();
-  const user = userRes?.user;
-  if (userErr || !user) return NextResponse.json({ error: "Not logged in" }, { status: 401 });
+  let userId: string | null = null;
+
+  if (token) userId = getUserIdFromToken(token);
+  if (!userId) {
+    const { data } = await supabase.auth.getUser();
+    userId = data.user?.id ?? null;
+  }
+  if (!userId) return NextResponse.json({ error: "Not logged in" }, { status: 401 });
 
   let body: any;
   try {
@@ -32,7 +51,7 @@ export async function POST(req: Request) {
     .upsert(
       {
         caption_id,
-        user_id: user.id,
+        user_id: userId,
         vote_value: vote,
         created_datetime_utc: now,
         modified_datetime_utc: now,

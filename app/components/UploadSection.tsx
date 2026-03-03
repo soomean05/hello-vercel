@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { createBrowserClient } from "@/lib/supabase/client";
+import { getAuthToken } from "../lib/getAuthToken";
 
 const SUPPORTED = new Set([
   "image/jpeg",
@@ -50,9 +50,7 @@ export default function UploadSection() {
     setCompletedStep(null);
 
     try {
-      const supabase = createBrowserClient();
-      const { data: { session } } = await supabase.auth.getSession();
-      const token = session?.access_token;
+      const token = await getAuthToken();
       if (!token) {
         setError("Not authenticated. Please sign in again.");
         setBusy(false);
