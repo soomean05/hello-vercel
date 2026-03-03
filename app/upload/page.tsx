@@ -26,12 +26,17 @@ export default function UploadPage() {
   const [imageId, setImageId] = useState<string | null>(null);
   const [captions, setCaptions] = useState<any[]>([]);
 
-  useEffect(() => {
-    (async () => {
-      const { data } = await supabase.auth.getSession();
-      if (!data.session) router.replace("/");
-    })();
-  }, [router]);
+useEffect(() => {
+  (async () => {
+    if (!supabase) {
+      router.replace("/");
+      return;
+    }
+
+    const { data } = await supabase.auth.getSession();
+    if (!data.session) router.replace("/");
+  })();
+}, [router]);
 
   useEffect(() => {
     if (!file) {
@@ -43,10 +48,15 @@ export default function UploadPage() {
     return () => URL.revokeObjectURL(url);
   }, [file]);
 
-  async function signOut() {
-    await supabase.auth.signOut();
+async function signOut() {
+  if (!supabase) {
     router.replace("/");
+    return;
   }
+
+  await supabase.auth.signOut();
+  router.replace("/");
+}
 
   async function runPipeline() {
     if (!file) return alert("Choose an image first.");
@@ -58,8 +68,14 @@ export default function UploadPage() {
     setCdnUrl(null);
     setImageId(null);
 
-    const { data: sessionData } = await supabase.auth.getSession();
-    const token = sessionData.session?.access_token;
+if (!supabase) {
+  setBusy(false);
+  return;
+}
+
+const { data: sessionData } = await supabase.auth.getSession();
+const token = sessionData.session?.access_token;
+
     if (!token) {
       setBusy(false);
       router.replace("/");

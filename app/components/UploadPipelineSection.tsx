@@ -45,13 +45,23 @@ export default function UploadPipelineSection() {
     return `${file.name} (${Math.round(file.size / 1024)} KB, ${file.type || "unknown type"})`;
   }, [file]);
 
-  async function getAccessToken(): Promise<string> {
-    const { data, error } = await supabase.auth.getSession();
-    if (error) throw new Error(error.message);
-    const token = data.session?.access_token;
-    if (!token) throw new Error("No access token found. Please sign in again.");
-    return token;
+async function getAccessToken(): Promise<string> {
+  if (!supabase) {
+    throw new Error(
+      "Supabase is not configured. Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY."
+    );
   }
+
+  const { data, error } = await supabase.auth.getSession();
+  if (error) throw new Error(error.message);
+
+  const token = data.session?.access_token;
+  if (!token) {
+    throw new Error("No access token found. Please sign in again.");
+  }
+
+  return token;
+}
 
   async function runPipeline() {
     setError(null);

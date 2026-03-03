@@ -5,13 +5,13 @@ import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 
 type FeedItem = {
+  imageId: string;
+  imageUrl: string;
   captionId: string;
   captionText: string;
-  imageId: string;
-  imageUrl: string | null;
 };
 
-function shuffle<T>(arr: T[]) {
+function shuffle<T>(arr: T[]): T[] {
   const a = [...arr];
   for (let i = a.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
@@ -20,283 +20,297 @@ function shuffle<T>(arr: T[]) {
   return a;
 }
 
-/**
- * Finds the current user's profile_id WITHOUT needing profiles.user_id.
- *
- * Strategy:
- * - If captions table has both profile_id and user_id, use that (fast).
- * - Else fallback to caption_votes (if the user has voted before).
- *
- * If BOTH are empty for the user, there is no way to derive profile_id from the client
- * with your current schema (no mapping column). In that case, you must ask course staff
- * what table/claim maps auth user -> profiles.id.
- */
-async function getMyProfileIdOrThrow(userId: string): Promise<string> {
-  // 1) Try from captions (you showed captions has profile_id FK)
-  const fromCaptions = await supabase
-    .from("captions")
-    .select("profile_id")
-    .eq("user_id", userId) // if captions has user_id
-    .order("created_datetime_utc", { ascending: false })
-    .limit(1)
-    .maybeSingle();
-
-  if (!fromCaptions.error && fromCaptions.data?.profile_id) {
-    return String(fromCaptions.data.profile_id);
-  }
-
-  // 2) Try from caption_votes (you showed caption_votes has user_id)
-  const fromVotes = await supabase
-    .from("caption_votes")
-    .select("profile_id")
-    .eq("user_id", userId)
-    .order("created_datetime_utc", { ascending: false })
-    .limit(1)
-    .maybeSingle();
-
-  if (fromVotes.error) throw fromVotes.error;
-  if (fromVotes.data?.profile_id) return String(fromVotes.data.profile_id);
-
-  throw new Error(
-    "Could not determine your profile_id. Your schema has no auth-user -> profiles mapping column, and you have no existing rows (captions/votes) that include both user_id and profile_id."
-  );
-}
-
 export default function RatePage() {
   const router = useRouter();
 
   const [loading, setLoading] = useState(true);
-  const [busyVote, setBusyVote] = useState(false);
-  const [items, setItems] = useState<FeedItem[]>([]);
+  const [error, setError] = useState<string | null>(null);
+
+  const [userId, setUserId] = useState<string | null>(null);
+
+  const [feed, setFeed] = useState<FeedItem[]>([]);
   const [idx, setIdx] = useState(0);
 
-  const [cachedProfileId, setCachedProfileId] = useState<string | null>(null);
+  const current = useMemo(() => feed[idx] ?? null, [feed, idx]);
 
-  const current = useMemo(() => items[idx] ?? null, [items, idx]);
-
+  // 1) Require auth
   useEffect(() => {
     (async () => {
-      const { data } = await supabase.auth.getSession();
-      if (!data.session) {
-        router.replace("/");
-        return;
+      try {
+        if (!supabase) {
+          setError(
+            "Supabase is not configured. Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY."
+          );
+          setLoading(false);
+          return;
+        }
+
+        const { data, error } = await supabase.auth.getUser();
+        if (error) throw error;
+
+        if (!data.user) {
+          router.replace(`/login?next=/rate`);
+          return;
+        }
+
+        setUserId(data.user.id);
+      } catch (e: any) {
+        setError(e?.message ?? String(e));
+        setLoading(false);
       }
-      await loadFeed();
     })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [router]);
 
-  async function loadFeed() {
-    setLoading(true);
+  // 2) Load feed of (image, caption)
+  useEffect(() => {
+    (async () => {
+      if (!supabase || !userId) return;
 
-    const { data, error } = await supabase
-      .from("captions")
-      .select("id, content, image_id, images(url)")
-      .limit(200);
+      setLoading(true);
+      setError(null);
 
-    if (error) {
-      alert(error.message);
-      setLoading(false);
+      try {
+        // Pull a bunch of captions with their image id
+        const { data: captions, error: capErr } = await supabase
+          .from("captions")
+          .select("id,text,image_id")
+          .limit(200);
+
+        if (capErr) throw capErr;
+        if (!captions || captions.length === 0) {
+          setFeed([]);
+          setLoading(false);
+          return;
+        }
+
+        // Collect image ids and fetch image URLs
+        const imageIds = Array.from(
+          new Set(captions.map((c: any) => c.image_id).filter(Boolean))
+        );
+
+        const { data: images, error: imgErr } = await supabase
+          .from("images")
+          .select("id, url")
+          .in("id", imageIds);
+
+        if (imgErr) throw imgErr;
+
+        const urlById = new Map<string, string>();
+        (images ?? []).forEach((im: any) => urlById.set(String(im.id), String(im.url)));
+
+        const items: FeedItem[] = captions
+          .map((c: any) => {
+            const imageId = String(c.image_id);
+            const imageUrl = urlById.get(imageId);
+            if (!imageUrl) return null;
+            return {
+              imageId,
+              imageUrl,
+              captionId: String(c.id),
+              captionText: String(c.text ?? ""),
+            };
+          })
+          .filter(Boolean) as FeedItem[];
+
+        setFeed(shuffle(items));
+        setIdx(0);
+      } catch (e: any) {
+        setError(e?.message ?? String(e));
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, [userId]);
+
+  async function vote(v: 1 | -1) {
+    if (!supabase) {
+      setError("Supabase not configured.");
       return;
     }
-
-    const feed: FeedItem[] = (data ?? []).map((row: any) => ({
-      captionId: row.id,
-      captionText: row.content, // ✅ captions.content per your schema
-      imageId: row.image_id,
-      imageUrl: row.images?.url ?? null, // ✅ images.url per your schema
-    }));
-
-    setItems(shuffle(feed));
-    setIdx(0);
-    setLoading(false);
-  }
-
-  async function vote(voteValue: 1 | -1) {
+    if (!userId) {
+      router.replace(`/login?next=/rate`);
+      return;
+    }
     if (!current) return;
-    setBusyVote(true);
+
+    setError(null);
 
     try {
-      const { data: u, error: uErr } = await supabase.auth.getUser();
-      if (uErr) throw uErr;
-
-      const userId = u.user?.id;
-      if (!userId) {
-        router.replace("/");
-        return;
-      }
-
-      // ✅ determine profile_id once, cache it
-      let profileId = cachedProfileId;
-      if (!profileId) {
-        profileId = await getMyProfileIdOrThrow(userId);
-        setCachedProfileId(profileId);
-      }
-
-      const nowIso = new Date().toISOString();
-
-      // ✅ Upsert lets user change vote without duplicates
-      const { error } = await supabase.from("caption_votes").upsert(
-        {
-          user_id: userId,
-          profile_id: profileId,
-          caption_id: current.captionId,
-          vote_value: voteValue,
-          created_datetime_utc: nowIso,
-          modified_datetime_utc: nowIso,
-        },
-        { onConflict: "user_id,caption_id" }
-      );
+      // You may need to adapt column names to YOUR schema:
+      // - if caption_votes has user_id + caption_id + vote_value, keep as below
+      // - if it requires profile_id, you must supply it (then we’ll fetch it)
+      const { error } = await supabase.from("caption_votes").insert({
+        user_id: userId,
+        caption_id: current.captionId,
+        vote_value: v,
+      });
 
       if (error) throw error;
 
-      setIdx((prev) => (prev + 1 >= items.length ? 0 : prev + 1));
+      // Next item
+      const nextIdx = idx + 1;
+      if (nextIdx >= feed.length) {
+        // reshuffle and restart
+        setFeed((f) => shuffle(f));
+        setIdx(0);
+      } else {
+        setIdx(nextIdx);
+      }
     } catch (e: any) {
-      console.error(e);
-      alert(e?.message ?? "Vote failed");
-    } finally {
-      setBusyVote(false);
+      setError(e?.message ?? String(e));
     }
   }
 
-  async function signOut() {
-    await supabase.auth.signOut();
-    router.replace("/");
+  if (loading) {
+    return (
+      <main style={{ minHeight: "100vh", display: "grid", placeItems: "center", fontFamily: "system-ui" }}>
+        <div>Loading…</div>
+      </main>
+    );
+  }
+
+  if (error) {
+    return (
+      <main style={{ minHeight: "100vh", padding: 24, fontFamily: "system-ui" }}>
+        <div style={{ color: "crimson", fontWeight: 800 }}>Error</div>
+        <pre style={{ whiteSpace: "pre-wrap" }}>{error}</pre>
+      </main>
+    );
+  }
+
+  if (!current) {
+    return (
+      <main style={{ minHeight: "100vh", display: "grid", placeItems: "center", fontFamily: "system-ui" }}>
+        <div>No captions/images found.</div>
+      </main>
+    );
   }
 
   return (
     <main
       style={{
         minHeight: "100vh",
-        background: "#f6f7f9",
         padding: 24,
         fontFamily: "system-ui",
+        background: "#f6f7f9",
       }}
     >
-      <div style={{ maxWidth: 920, margin: "0 auto", display: "grid", gap: 14 }}>
+      <div style={{ maxWidth: 900, margin: "0 auto", display: "grid", gap: 14 }}>
         <header
           style={{
+            padding: 18,
+            borderRadius: 18,
+            background: "white",
+            boxShadow: "0 10px 35px rgba(0,0,0,0.08)",
             display: "flex",
             justifyContent: "space-between",
-            alignItems: "center",
             gap: 12,
-            flexWrap: "wrap",
+            alignItems: "center",
           }}
         >
-          <div style={{ fontWeight: 950, fontSize: 20 }}>Rate</div>
-
-          <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-            <button onClick={() => router.push("/upload")} style={btnStyle}>
-              Go to Upload
-            </button>
-            <button onClick={() => router.push("/dashboard")} style={btnStyle}>
-              Dashboard
-            </button>
-            <button onClick={loadFeed} style={btnStyle}>
-              Refresh
-            </button>
-            <button onClick={signOut} style={btnStyle}>
-              Sign out
-            </button>
+          <div>
+            <div style={{ fontSize: 22, fontWeight: 900 }}>Rate captions</div>
+            <div style={{ opacity: 0.7, marginTop: 4 }}>
+              {idx + 1} / {feed.length}
+            </div>
           </div>
+          <button
+            onClick={() => router.replace("/")}
+            style={{
+              padding: "10px 12px",
+              borderRadius: 12,
+              border: "1px solid rgba(0,0,0,0.12)",
+              background: "white",
+              fontWeight: 800,
+              cursor: "pointer",
+            }}
+          >
+            Home
+          </button>
         </header>
 
-        <section style={cardStyle}>
-          {loading ? (
-            <div style={{ opacity: 0.7 }}>Loading…</div>
-          ) : !current ? (
-            <div style={{ opacity: 0.7 }}>No captions found.</div>
-          ) : (
-            <>
-              <div
-                style={{
-                  width: "100%",
-                  aspectRatio: "16 / 9",
-                  borderRadius: 16,
-                  overflow: "hidden",
-                  background: "#000",
-                }}
-              >
-                {current.imageUrl ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={current.imageUrl}
-                    alt="meme"
-                    style={{ width: "100%", height: "100%", objectFit: "contain" }}
-                  />
-                ) : (
-                  <div style={{ color: "white", padding: 16 }}>No image url</div>
-                )}
-              </div>
+        <section
+          style={{
+            padding: 18,
+            borderRadius: 18,
+            background: "white",
+            boxShadow: "0 10px 35px rgba(0,0,0,0.08)",
+            display: "grid",
+            gap: 12,
+          }}
+        >
+          <div
+            style={{
+              width: "100%",
+              aspectRatio: "16 / 9",
+              borderRadius: 16,
+              overflow: "hidden",
+              background: "#eee",
+              display: "grid",
+              placeItems: "center",
+            }}
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={current.imageUrl}
+              alt="meme"
+              style={{ width: "100%", height: "100%", objectFit: "cover" }}
+            />
+          </div>
 
-              <div
-                style={{
-                  padding: 16,
-                  borderRadius: 14,
-                  border: "1px solid rgba(0,0,0,0.08)",
-                  fontSize: 18,
-                  fontWeight: 850,
-                }}
-              >
-                {current.captionText}
-              </div>
+          <div style={{ fontSize: 18, fontWeight: 900 }}>{current.captionText}</div>
 
-              <div style={{ display: "flex", gap: 14 }}>
-                <button
-                  onClick={() => vote(-1)}
-                  disabled={busyVote}
-                  style={voteBtnStyle}
-                >
-                  👎
-                </button>
-                <button
-                  onClick={() => vote(1)}
-                  disabled={busyVote}
-                  style={voteBtnStyle}
-                >
-                  👍
-                </button>
-              </div>
+          <div style={{ display: "flex", gap: 10 }}>
+            <button
+              onClick={() => vote(-1)}
+              style={{
+                width: 56,
+                height: 44,
+                borderRadius: 14,
+                border: "1px solid rgba(0,0,0,0.12)",
+                background: "white",
+                cursor: "pointer",
+                fontSize: 18,
+              }}
+              aria-label="downvote"
+              title="downvote"
+            >
+              👎
+            </button>
+            <button
+              onClick={() => vote(1)}
+              style={{
+                width: 56,
+                height: 44,
+                borderRadius: 14,
+                border: "1px solid rgba(0,0,0,0.12)",
+                background: "white",
+                cursor: "pointer",
+                fontSize: 18,
+              }}
+              aria-label="upvote"
+              title="upvote"
+            >
+              👍
+            </button>
 
-              <div style={{ opacity: 0.6, fontSize: 13 }}>
-                Item {idx + 1} / {items.length}
-              </div>
-
-              <div style={{ opacity: 0.55, fontSize: 12 }}>
-                profile_id: {cachedProfileId ?? "(not loaded yet)"}
-              </div>
-            </>
-          )}
+            <button
+              onClick={() => setIdx((i) => (i + 1 >= feed.length ? 0 : i + 1))}
+              style={{
+                marginLeft: "auto",
+                padding: "10px 12px",
+                borderRadius: 14,
+                border: "1px solid rgba(0,0,0,0.12)",
+                background: "white",
+                fontWeight: 900,
+                cursor: "pointer",
+              }}
+            >
+              Skip →
+            </button>
+          </div>
         </section>
       </div>
     </main>
   );
 }
-
-const btnStyle: React.CSSProperties = {
-  padding: "10px 14px",
-  borderRadius: 12,
-  border: "1px solid rgba(0,0,0,0.15)",
-  background: "white",
-  fontWeight: 800,
-  cursor: "pointer",
-};
-
-const cardStyle: React.CSSProperties = {
-  background: "white",
-  borderRadius: 20,
-  padding: 20,
-  boxShadow: "0 18px 50px rgba(0,0,0,0.08)",
-  display: "grid",
-  gap: 14,
-};
-
-const voteBtnStyle: React.CSSProperties = {
-  flex: 1,
-  padding: "14px 16px",
-  borderRadius: 14,
-  border: "1px solid rgba(0,0,0,0.15)",
-  background: "white",
-  fontSize: 18,
-  cursor: "pointer",
-};

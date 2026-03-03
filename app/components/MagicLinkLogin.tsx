@@ -5,67 +5,84 @@ import { supabase } from "@/lib/supabaseClient";
 
 export default function MagicLinkLogin() {
   const [email, setEmail] = useState("");
-  const [sent, setSent] = useState(false);
+  const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [sent, setSent] = useState(false);
 
-  async function sendMagicLink() {
+  async function sendLink() {
     setError(null);
 
-    const { error } = await supabase.auth.signInWithOtp({
-      email,
-      options: {
-        emailRedirectTo: window.location.origin,
-      },
-    });
+    if (!supabase) {
+      setError(
+        "Supabase is not configured. Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY."
+      );
+      return;
+    }
 
-    if (error) {
-      setError(error.message);
-    } else {
+    if (!email) {
+      setError("Enter your email.");
+      return;
+    }
+
+    setBusy(true);
+    try {
+      const { error } = await supabase.auth.signInWithOtp({
+        email,
+        options: {
+          emailRedirectTo: `${window.location.origin}/auth/callback`,
+        },
+      });
+      if (error) throw error;
+
       setSent(true);
+    } catch (e: any) {
+      setError(e?.message ?? String(e));
+    } finally {
+      setBusy(false);
     }
   }
 
   return (
-    <div style={{ display: "grid", gap: 12 }}>
+    <div style={{ display: "grid", gap: 10 }}>
+      <div style={{ fontWeight: 900, fontSize: 18 }}>Magic link</div>
+
       <input
-        type="email"
-        placeholder="your-email@example.com"
         value={email}
         onChange={(e) => setEmail(e.target.value)}
+        placeholder="you@columbia.edu"
+        type="email"
         style={{
-          padding: 12,
+          padding: "12px 14px",
           borderRadius: 12,
-          border: "1px solid #ddd",
-          fontSize: 14,
+          border: "1px solid rgba(0,0,0,0.15)",
+          outline: "none",
         }}
       />
 
       <button
-        onClick={sendMagicLink}
+        onClick={sendLink}
+        disabled={busy}
         style={{
-          height: 44,
-          borderRadius: 12,
-          border: "none",
-          background: "black",
-          color: "white",
-          fontWeight: 800,
-          cursor: "pointer",
+          padding: "12px 14px",
+          borderRadius: 14,
+          border: "1px solid rgba(0,0,0,0.15)",
+          background: "white",
+          fontWeight: 900,
+          cursor: busy ? "not-allowed" : "pointer",
         }}
       >
-        Email me a login link
+        {busy ? "Sending…" : "Send magic link"}
       </button>
 
-      {sent && (
-        <div style={{ fontSize: 13, color: "#555" }}>
-          Check your email and click the login link.
+      {sent ? (
+        <div style={{ color: "green", fontWeight: 700 }}>
+          Sent! Check your email.
         </div>
-      )}
+      ) : null}
 
-      {error && (
-        <div style={{ fontSize: 13, color: "crimson" }}>
-          {error}
-        </div>
-      )}
+      {error ? (
+        <div style={{ color: "crimson", fontWeight: 700 }}>{error}</div>
+      ) : null}
     </div>
   );
 }

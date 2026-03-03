@@ -8,19 +8,27 @@ export default function DashboardPage() {
   const router = useRouter();
   const [email, setEmail] = useState<string | null>(null);
 
-  useEffect(() => {
-    (async () => {
-      const { data } = await supabase.auth.getSession();
-      if (!data.session) {
-        router.replace("/");
-        return;
-      }
-      const { data: u } = await supabase.auth.getUser();
-      setEmail(u.user?.email ?? null);
-    })();
-  }, [router]);
+useEffect(() => {
+  (async () => {
+    if (!supabase) {
+      router.replace("/");
+      return;
+    }
+
+    const { data } = await supabase.auth.getSession();
+    if (!data.session) {
+      router.replace("/");
+      return;
+    }
+  })();
+}, [router]);
 
   async function signOut() {
+    if (!supabase) {
+      router.replace("/");
+      return; 
+    }
+    
     await supabase.auth.signOut();
     router.replace("/");
   }
