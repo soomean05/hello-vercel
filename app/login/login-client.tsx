@@ -14,7 +14,6 @@ export default function LoginClient({ next }: { next: string }) {
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
 
-  // If already logged in, go to next
   useEffect(() => {
     (async () => {
       const { data } = await supabase.auth.getSession();
@@ -39,9 +38,7 @@ export default function LoginClient({ next }: { next: string }) {
       const { error } = await supabase.auth.signUp({ email, password });
       if (error) throw error;
 
-      setMsg(
-        "Account created. If email confirmation is required, check your email. Otherwise you can sign in now."
-      );
+      setMsg("Account created. If email confirmation is required, check your email.");
       setMode("signin");
     } catch (e: any) {
       setMsg(e?.message ?? String(e));
@@ -53,30 +50,12 @@ export default function LoginClient({ next }: { next: string }) {
   return (
     <main style={{ minHeight: "100vh", padding: 24, fontFamily: "system-ui", background: "#f6f7f9" }}>
       <div style={{ maxWidth: 520, margin: "0 auto", display: "grid", gap: 14 }}>
-        <header
-          style={{
-            padding: 18,
-            borderRadius: 18,
-            background: "white",
-            boxShadow: "0 10px 35px rgba(0,0,0,0.08)",
-          }}
-        >
-          <div style={{ fontSize: 24, fontWeight: 900 }}>
-            {mode === "signin" ? "Sign in" : "Create account"}
-          </div>
+        <header style={{ padding: 18, borderRadius: 18, background: "white", boxShadow: "0 10px 35px rgba(0,0,0,0.08)" }}>
+          <div style={{ fontSize: 24, fontWeight: 900 }}>{mode === "signin" ? "Sign in" : "Create account"}</div>
           <div style={{ opacity: 0.7, marginTop: 6 }}>Continue to: {next}</div>
         </header>
 
-        <section
-          style={{
-            padding: 18,
-            borderRadius: 18,
-            background: "white",
-            boxShadow: "0 10px 35px rgba(0,0,0,0.08)",
-            display: "grid",
-            gap: 12,
-          }}
-        >
+        <section style={{ padding: 18, borderRadius: 18, background: "white", boxShadow: "0 10px 35px rgba(0,0,0,0.08)", display: "grid", gap: 12 }}>
           <label style={{ display: "grid", gap: 6 }}>
             <div style={{ fontWeight: 800 }}>Email</div>
             <input
@@ -84,12 +63,7 @@ export default function LoginClient({ next }: { next: string }) {
               onChange={(e) => setEmail(e.target.value)}
               placeholder="you@columbia.edu"
               type="email"
-              style={{
-                padding: "12px 14px",
-                borderRadius: 12,
-                border: "1px solid rgba(0,0,0,0.15)",
-                outline: "none",
-              }}
+              style={{ padding: "12px 14px", borderRadius: 12, border: "1px solid rgba(0,0,0,0.15)", outline: "none" }}
             />
           </label>
 
@@ -100,12 +74,7 @@ export default function LoginClient({ next }: { next: string }) {
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
               type="password"
-              style={{
-                padding: "12px 14px",
-                borderRadius: 12,
-                border: "1px solid rgba(0,0,0,0.15)",
-                outline: "none",
-              }}
+              style={{ padding: "12px 14px", borderRadius: 12, border: "1px solid rgba(0,0,0,0.15)", outline: "none" }}
             />
           </label>
 
@@ -114,14 +83,7 @@ export default function LoginClient({ next }: { next: string }) {
           <button
             onClick={submit}
             disabled={busy}
-            style={{
-              padding: "12px 14px",
-              borderRadius: 14,
-              border: "1px solid rgba(0,0,0,0.15)",
-              background: "white",
-              fontWeight: 900,
-              cursor: busy ? "not-allowed" : "pointer",
-            }}
+            style={{ padding: "12px 14px", borderRadius: 14, border: "1px solid rgba(0,0,0,0.15)", background: "white", fontWeight: 900, cursor: busy ? "not-allowed" : "pointer" }}
           >
             {busy ? "Working…" : mode === "signin" ? "Sign in" : "Sign up"}
           </button>
@@ -131,14 +93,7 @@ export default function LoginClient({ next }: { next: string }) {
               setMsg(null);
               setMode((m) => (m === "signin" ? "signup" : "signin"));
             }}
-            style={{
-              padding: "10px 14px",
-              borderRadius: 14,
-              border: "1px solid rgba(0,0,0,0.12)",
-              background: "white",
-              fontWeight: 900,
-              cursor: "pointer",
-            }}
+            style={{ padding: "10px 14px", borderRadius: 14, border: "1px solid rgba(0,0,0,0.12)", background: "white", fontWeight: 900, cursor: "pointer" }}
           >
             {mode === "signin" ? "Need an account? Sign up" : "Already have an account? Sign in"}
           </button>
