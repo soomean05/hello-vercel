@@ -3,6 +3,16 @@
 import Link from "next/link";
 import { createBrowserClient } from "@/lib/supabase/client";
 
+const btnBase = {
+  padding: "10px 20px",
+  borderRadius: 12,
+  fontWeight: 700,
+  fontSize: 15,
+  cursor: "pointer",
+  textDecoration: "none",
+  display: "inline-block",
+} as const;
+
 export default function HomeClient({ email }: { email: string | null }) {
   const handleSignIn = async () => {
     const supabase = createBrowserClient();
@@ -10,116 +20,40 @@ export default function HomeClient({ email }: { email: string | null }) {
       typeof window !== "undefined"
         ? process.env.NEXT_PUBLIC_SITE_URL || window.location.origin
         : "";
-    const redirectTo = `${origin}/auth/callback`;
     await supabase.auth.signInWithOAuth({
       provider: "google",
-      options: { redirectTo },
+      options: { redirectTo: `${origin}/auth/callback` },
     });
   };
 
   if (email) {
     return (
-      <div
+      <Link
+        href="/app"
         style={{
-          background: "white",
-          borderRadius: 18,
-          padding: 24,
-          boxShadow: "0 10px 35px rgba(0,0,0,0.08)",
-          border: "1px solid rgba(0,0,0,0.06)",
+          ...btnBase,
+          background: "#fff",
+          color: "#0f0f12",
+          border: "none",
         }}
       >
-        <div style={{ fontSize: 16, fontWeight: 900, marginBottom: 8 }}>Quick Actions</div>
-        <p style={{ margin: 0, fontSize: 14, color: "#444", marginBottom: 18 }}>
-          Signed in as: <strong>{email}</strong>
-        </p>
-        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-          <Link
-            href="/rate"
-            style={{
-              display: "block",
-              padding: "14px 18px",
-              borderRadius: 14,
-              background: "black",
-              color: "white",
-              textDecoration: "none",
-              fontWeight: 700,
-              textAlign: "center",
-            }}
-          >
-            Rate captions
-          </Link>
-          <Link
-            href="/upload"
-            style={{
-              display: "block",
-              padding: "14px 18px",
-              borderRadius: 14,
-              border: "1px solid rgba(0,0,0,0.12)",
-              background: "white",
-              color: "#111",
-              textDecoration: "none",
-              fontWeight: 700,
-              textAlign: "center",
-            }}
-          >
-            Upload image
-          </Link>
-          <Link
-            href="/protected"
-            style={{
-              display: "block",
-              padding: "14px 18px",
-              borderRadius: 14,
-              border: "1px solid rgba(0,0,0,0.12)",
-              background: "white",
-              color: "#111",
-              textDecoration: "none",
-              fontWeight: 700,
-              textAlign: "center",
-              opacity: 0.9,
-            }}
-          >
-            Protected dashboard
-          </Link>
-        </div>
-      </div>
+        Go to app
+      </Link>
     );
   }
 
   return (
-    <div
+    <button
+      type="button"
+      onClick={handleSignIn}
       style={{
-        background: "white",
-        borderRadius: 18,
-        padding: 24,
-        boxShadow: "0 10px 35px rgba(0,0,0,0.08)",
-        border: "1px solid rgba(0,0,0,0.06)",
+        ...btnBase,
+        background: "#fff",
+        color: "#0f0f12",
+        border: "none",
       }}
     >
-      <div style={{ fontSize: 16, fontWeight: 900, marginBottom: 8 }}>Quick Actions</div>
-      <button
-        onClick={handleSignIn}
-        type="button"
-        style={{
-          display: "block",
-          width: "100%",
-          padding: "16px 24px",
-          borderRadius: 14,
-          background: "black",
-          color: "white",
-          border: "none",
-          fontWeight: 800,
-          textAlign: "center",
-          fontSize: 16,
-          marginBottom: 12,
-          cursor: "pointer",
-        }}
-      >
-        Sign in with Google
-      </button>
-      <p style={{ margin: 0, fontSize: 12, color: "#777" }}>
-        You need an account to rate or upload.
-      </p>
-    </div>
+      Sign in with Google
+    </button>
   );
 }

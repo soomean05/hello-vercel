@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import HomeClient from "./home-client";
-import NavAuth from "./components/NavAuth";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -16,128 +15,121 @@ export default async function HomePage() {
     <main
       style={{
         minHeight: "100vh",
-        background: "#f6f7f9",
-        fontFamily: "system-ui",
+        background: "linear-gradient(180deg, #0f0f12 0%, #1a1a1f 50%, #0f0f12 100%)",
+        fontFamily: "system-ui, -apple-system, sans-serif",
+        color: "#e4e4e7",
       }}
     >
-      {/* Nav header */}
       <header
         style={{
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
-          padding: "16px 24px",
-          background: "white",
-          borderBottom: "1px solid rgba(0,0,0,0.06)",
+          padding: "20px 32px",
+          maxWidth: 1100,
+          margin: "0 auto",
         }}
       >
         <Link
           href="/"
-          style={{ fontSize: 18, fontWeight: 900, color: "#111", textDecoration: "none" }}
+          style={{
+            fontSize: 20,
+            fontWeight: 800,
+            color: "#fff",
+            textDecoration: "none",
+            letterSpacing: -0.5,
+          }}
         >
           CaptionRater
         </Link>
-        <NavAuth signedIn={!!user} />
+        <HomeClient email={email} />
       </header>
 
       <section
         style={{
-          width: "100%",
-          maxWidth: 900,
+          maxWidth: 720,
           margin: "0 auto",
-          padding: 24,
-          display: "grid",
-          gridTemplateColumns: "1fr 1fr",
-          gap: 22,
-          alignItems: "center",
+          padding: "48px 32px 80px",
+          textAlign: "center",
         }}
       >
-        {/* Left: Branding + description */}
-        <div
+        <h1
           style={{
-            background: "white",
-            borderRadius: 18,
-            padding: 28,
-            boxShadow: "0 10px 35px rgba(0,0,0,0.08)",
-            border: "1px solid rgba(0,0,0,0.06)",
+            margin: 0,
+            fontSize: "clamp(2.5rem, 6vw, 3.5rem)",
+            fontWeight: 800,
+            lineHeight: 1.1,
+            letterSpacing: -0.03,
           }}
         >
-          <h1 style={{ margin: 0, fontSize: 36, letterSpacing: -0.5, lineHeight: 1.1 }}>
-            CaptionRater
-          </h1>
-          <p style={{ marginTop: 10, fontSize: 16, color: "#444", lineHeight: 1.5 }}>
-            Upload memes, generate captions, and rate the funniest ones.
-          </p>
-          <ul style={{ marginTop: 16, paddingLeft: 20, color: "#444", lineHeight: 1.8 }}>
-            <li>Sign in with Google</li>
-            <li>Rate captions (👍 / 👎)</li>
-            <li>Upload images → generate captions</li>
-          </ul>
-          <div style={{ marginTop: 20, display: "flex", gap: 12, flexWrap: "wrap" }}>
-            <Link
-              href="/list"
-              style={{
-                padding: "12px 18px",
-                borderRadius: 14,
-                border: "1px solid rgba(0,0,0,0.14)",
-                background: "white",
-                color: "#111",
-                textDecoration: "none",
-                fontWeight: 700,
-                fontSize: 14,
-              }}
-            >
-              DB Read Demo
-            </Link>
-            <Link
-              href="/protected"
-              style={{
-                padding: "12px 18px",
-                borderRadius: 14,
-                border: "1px solid rgba(0,0,0,0.14)",
-                background: "white",
-                color: "#111",
-                textDecoration: "none",
-                fontWeight: 700,
-                fontSize: 14,
-              }}
-            >
-              Protected
-            </Link>
-            <Link
-              href="/rate"
-              style={{
-                padding: "12px 18px",
-                borderRadius: 14,
-                background: "black",
-                color: "white",
-                textDecoration: "none",
-                fontWeight: 700,
-                fontSize: 14,
-              }}
-            >
-              Rate captions
-            </Link>
-            <Link
-              href="/upload"
-              style={{
-                padding: "12px 18px",
-                borderRadius: 14,
-                border: "1px solid rgba(0,0,0,0.14)",
-                background: "white",
-                color: "#111",
-                textDecoration: "none",
-                fontWeight: 700,
-                fontSize: 14,
-              }}
-            >
-              Upload image
-            </Link>
-          </div>
+          Rate memes. Generate captions. Find the funniest.
+        </h1>
+        <p
+          style={{
+            marginTop: 24,
+            fontSize: 18,
+            lineHeight: 1.6,
+            color: "#a1a1aa",
+            maxWidth: 560,
+            marginLeft: "auto",
+            marginRight: "auto",
+          }}
+        >
+          CaptionRater helps you discover and vote on AI-generated captions for memes.
+          Upload an image, get 5 unique captions, and help the community decide what’s funny.
+        </p>
+
+        <div
+          style={{
+            marginTop: 48,
+            padding: "32px 28px",
+            background: "rgba(255,255,255,0.04)",
+            borderRadius: 16,
+            border: "1px solid rgba(255,255,255,0.08)",
+            textAlign: "left",
+          }}
+        >
+          <h2 style={{ margin: "0 0 16px 0", fontSize: 18, fontWeight: 700, color: "#fff" }}>
+            How it works
+          </h2>
+          <ol
+            style={{
+              margin: 0,
+              paddingLeft: 20,
+              color: "#a1a1aa",
+              lineHeight: 2,
+              fontSize: 15,
+            }}
+          >
+            <li>
+              <strong style={{ color: "#e4e4e7" }}>Sign in with Google</strong> — one click, no password.
+            </li>
+            <li>
+              <strong style={{ color: "#e4e4e7" }}>Rate captions</strong> — see a meme and caption, give a thumbs up or down.
+            </li>
+            <li>
+              <strong style={{ color: "#e4e4e7" }}>Upload & generate</strong> — upload your own image; our AI suggests 5 captions.
+            </li>
+            <li>
+              <strong style={{ color: "#e4e4e7" }}>Improve the dataset</strong> — your votes train better models over time.
+            </li>
+          </ol>
         </div>
 
-        {/* Right: Quick Actions */}
-        <HomeClient email={email} />
+        <div
+          style={{
+            marginTop: 40,
+            padding: "24px 28px",
+            background: "rgba(255,255,255,0.03)",
+            borderRadius: 14,
+            border: "1px solid rgba(255,255,255,0.06)",
+          }}
+        >
+          <p style={{ margin: 0, fontSize: 14, color: "#71717a" }}>
+            All features — rating and uploading — are in the app after you sign in.
+            Get started below.
+          </p>
+        </div>
       </section>
     </main>
   );

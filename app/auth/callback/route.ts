@@ -18,7 +18,7 @@ export async function GET(request: Request) {
   const safeNext =
     nextPath && typeof nextPath === "string" && nextPath.startsWith("/") && !nextPath.startsWith("//")
       ? nextPath
-      : "/protected";
+      : "/app";
 
   return NextResponse.redirect(new URL(safeNext, url.origin));
 }

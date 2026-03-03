@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 
-const PROTECTED_PATHS = ["/protected", "/rate", "/upload"];
+const PROTECTED_PATHS = ["/app", "/protected", "/rate", "/upload"];
 
 function isProtected(pathname: string) {
   return PROTECTED_PATHS.some((p) => pathname === p || pathname.startsWith(p + "/"));
@@ -39,5 +39,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/protected", "/protected/(.*)", "/rate", "/upload"],
+  matcher: ["/app", "/app/(.*)", "/protected", "/protected/(.*)", "/rate", "/upload"],
 };
