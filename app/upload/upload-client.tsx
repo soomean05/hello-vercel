@@ -24,8 +24,6 @@ export default function UploadClient() {
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
-  const [cdnUrl, setCdnUrl] = useState<string | null>(null);
-  const [imageId, setImageId] = useState<string | null>(null);
   const [captions, setCaptions] = useState<any[]>([]);
   const [error, setError] = useState<string | null>(null);
 
@@ -53,8 +51,6 @@ export default function UploadClient() {
     setBusy(true);
     setError(null);
     setCaptions([]);
-    setCdnUrl(null);
-    setImageId(null);
     setCompletedStep(null);
 
     try {
@@ -69,7 +65,6 @@ export default function UploadClient() {
 
       const presignedUrl: string = j1.presignedUrl;
       const cdnUrlFromApi: string = j1.cdnUrl;
-      setCdnUrl(cdnUrlFromApi);
 
       setCompletedStep(2);
       const r2 = await fetch(presignedUrl, {
@@ -89,7 +84,6 @@ export default function UploadClient() {
       if (!r3.ok) throw new Error(j3.error || JSON.stringify(j3));
 
       const imageIdFromApi: string = j3.imageId;
-      setImageId(imageIdFromApi);
 
       setCompletedStep(4);
       const r4 = await fetch("/api/pipeline/generate-captions", {
@@ -289,25 +283,6 @@ export default function UploadClient() {
             <div style={{ marginTop: 14, color: "crimson", fontSize: 14 }}>{error}</div>
           )}
 
-          {/* Results */}
-          {cdnUrl && (
-            <div style={{ marginTop: 20 }}>
-              <div style={{ fontWeight: 800, marginBottom: 10 }}>Uploaded image</div>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={cdnUrl}
-                alt="Uploaded"
-                style={{
-                  maxWidth: "100%",
-                  maxHeight: 320,
-                  borderRadius: 14,
-                  objectFit: "contain",
-                  border: "1px solid #eee",
-                }}
-              />
-            </div>
-          )}
-
           {captions.length > 0 && (
             <div style={{ marginTop: 24 }}>
               <div style={{ fontWeight: 800, marginBottom: 12 }}>Generated captions</div>
@@ -321,29 +296,9 @@ export default function UploadClient() {
                       background: "#fafafa",
                       border: "1px solid #eee",
                       lineHeight: 1.4,
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                      gap: 12,
                     }}
                   >
-                    <span>{c.content ?? c.text ?? c.caption ?? JSON.stringify(c)}</span>
-                    <Link
-                      href="/rate"
-                      style={{
-                        padding: "6px 12px",
-                        borderRadius: 10,
-                        border: "1px solid rgba(0,0,0,0.12)",
-                        background: "white",
-                        fontSize: 12,
-                        fontWeight: 700,
-                        textDecoration: "none",
-                        color: "#111",
-                        flexShrink: 0,
-                      }}
-                    >
-                      Rate this
-                    </Link>
+                    {c.content ?? c.text ?? c.caption ?? JSON.stringify(c)}
                   </div>
                 ))}
               </div>
