@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { cookies } from "next/headers";
 
 export async function GET(request: Request) {
   const url = new URL(request.url);
@@ -7,10 +8,21 @@ export async function GET(request: Request) {
 
   if (!code) return NextResponse.redirect(new URL("/login", url.origin));
 
-  const supabase = await createSupabaseServerClient();
+  const store = await cookies();
+  const supabase = await createSupabaseServerClient(store);
   const { error } = await supabase.auth.exchangeCodeForSession(code);
 
   if (error) return NextResponse.redirect(new URL("/login?error=oauth", url.origin));
 
-  return NextResponse.redirect(new URL("/protected", url.origin));
+  const nextPath = store.get("next_path")?.value;
+  if (nextPath) {
+    store.set("next_path", "", { path: "/", maxAge: 0 });
+  }
+
+  const safeNext =
+    nextPath && nextPath.startsWith("/") && !nextPath.startsWith("//")
+      ? nextPath
+      : "/protected";
+
+  return NextResponse.redirect(new URL(safeNext, url.origin));
 }

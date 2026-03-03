@@ -1,7 +1,6 @@
 "use client";
 
 import { useMemo, useRef, useState } from "react";
-import { supabase } from "@/lib/supabaseClient";
 
 type Stage = "idle" | "s1" | "s2" | "s3" | "s4" | "done" | "error";
 
@@ -37,22 +36,12 @@ export default function PipelineRightCard() {
     return `${file.name} • ${Math.round(file.size / 1024)} KB • ${file.type || "unknown"}`;
   }, [file]);
 
-  async function getJWTOrNull(): Promise<string | null> {
-    const { data, error } = await supabase.auth.getSession();
-    if (error) return null;
-    return data.session?.access_token ?? null; 
-  }
-
-  async function ensureLoggedInOrExplain(): Promise<string | null> {
+  async function ensureLoggedInOrExplain() {
     setCheckingAuth(true);
     try {
-      const jwt = await getJWTOrNull();
-      if (!jwt) {
-        setError("Please sign in first to use the upload pipeline.");
-        setStage("error");
-        return null;
-      }
-      return jwt;
+      // We rely on the API routes (SSR cookies) for auth.
+      // If user isn't logged in, API will return 401 and we show a sign-in link.
+      return;
     } finally {
       setCheckingAuth(false);
     }
@@ -78,8 +67,7 @@ export default function PipelineRightCard() {
     setCdnUrl(null);
     setImageId(null);
 
-    const jwt = await ensureLoggedInOrExplain();
-    if (!jwt) return;
+    await ensureLoggedInOrExplain();
 
     if (!file) {
       setError("Pick an image first.");
@@ -112,6 +100,7 @@ export default function PipelineRightCard() {
         },
         body: JSON.stringify({ contentType: file.type || "image/jpeg" }),
       });
+      if (r1.status === 401) throw new Error("Not logged in. Please sign in to run the pipeline.");
       if (!r1.ok) throw new Error(`Step 1 failed (${r1.status}): ${await r1.text()}`);
       const s1 = await r1.json();
       const presignedUrl = s1?.presignedUrl;
@@ -137,6 +126,7 @@ export default function PipelineRightCard() {
         },
         body: JSON.stringify({ imageUrl: newCdnUrl, isCommonUse: false }),
       });
+      if (r3.status === 401) throw new Error("Not logged in. Please sign in to run the pipeline.");
       if (!r3.ok) throw new Error(`Step 3 failed (${r3.status}): ${await r3.text()}`);
       const s3 = await r3.json();
       const newImageId = s3?.imageId;
@@ -152,6 +142,7 @@ export default function PipelineRightCard() {
         },
         body: JSON.stringify({ imageId: newImageId }),
       });
+      if (r4.status === 401) throw new Error("Not logged in. Please sign in to run the pipeline.");
       if (!r4.ok) throw new Error(`Step 4 failed (${r4.status}): ${await r4.text()}`);
       const s4 = await r4.json();
       setCaptions(Array.isArray(s4) ? s4 : [s4]);
@@ -318,10 +309,10 @@ export default function PipelineRightCard() {
             }}
           >
             {error}
-            {error.toLowerCase().includes("sign in") ? (
+            {error.toLowerCase().includes("sign in") || error.toLowerCase().includes("logged in") ? (
               <div style={{ marginTop: 8 }}>
                 <a
-                  href="/protected"
+                  href="/login?next=/upload"
                   style={{ color: "crimson", fontWeight: 900, textDecoration: "underline" }}
                 >
                   Sign in →

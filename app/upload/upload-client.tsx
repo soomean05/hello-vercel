@@ -26,7 +26,7 @@ export default function UploadClient() {
   const [captions, setCaptions] = useState<any[]>([]);
 
   async function signOut() {
-    await supabase.auth.signOut();
+    await fetch("/api/auth/signout", { method: "POST" }).catch(() => null);
     router.replace("/login");
   }
 

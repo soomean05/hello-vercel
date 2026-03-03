@@ -24,13 +24,8 @@ useEffect(() => {
 }, [router]);
 
   async function signOut() {
-    if (!supabase) {
-      router.replace("/");
-      return; 
-    }
-    
-    await supabase.auth.signOut();
-    router.replace("/");
+    await fetch("/api/auth/signout", { method: "POST" }).catch(() => null);
+    router.replace("/login");
   }
 
   return (

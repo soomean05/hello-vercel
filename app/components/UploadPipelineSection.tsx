@@ -1,7 +1,6 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { supabase } from "@/lib/supabaseClient";
 
 type PipelineState =
   | "idle"
@@ -45,13 +44,6 @@ export default function UploadPipelineSection() {
     return `${file.name} (${Math.round(file.size / 1024)} KB, ${file.type || "unknown type"})`;
   }, [file]);
 
-  async function assertLoggedIn() {
-    const { data, error } = await supabase.auth.getSession();
-    if (error || !data.session) {
-      throw new Error("Not logged in. Please sign in and try again.");
-    }
-  }
-
   async function runPipeline() {
     setError(null);
     setCdnUrl(null);
@@ -78,8 +70,6 @@ export default function UploadPipelineSection() {
     }
 
     try {
-      await assertLoggedIn();
-
       // STEP 1: presigned URL
       setState("getting_url");
       const s1 = await fetch(`/api/pipeline/generate-presigned-url`, {
@@ -93,6 +83,9 @@ export default function UploadPipelineSection() {
         }),
       });
 
+      if (s1.status === 401) {
+        throw new Error("Not logged in. Please sign in and try again.");
+      }
       if (!s1.ok) {
         const txt = await s1.text();
         throw new Error(`Step 1 failed (${s1.status}): ${txt}`);
@@ -132,6 +125,9 @@ export default function UploadPipelineSection() {
         }),
       });
 
+      if (s3.status === 401) {
+        throw new Error("Not logged in. Please sign in and try again.");
+      }
       if (!s3.ok) {
         const txt = await s3.text();
         throw new Error(`Step 3 failed (${s3.status}): ${txt}`);
@@ -152,6 +148,9 @@ export default function UploadPipelineSection() {
         body: JSON.stringify({ imageId: newImageId }),
       });
 
+      if (s4.status === 401) {
+        throw new Error("Not logged in. Please sign in and try again.");
+      }
       if (!s4.ok) {
         const txt = await s4.text();
         throw new Error(`Step 4 failed (${s4.status}): ${txt}`);
@@ -213,7 +212,18 @@ export default function UploadPipelineSection() {
           <div style={{ opacity: 0.8 }}>{prettyState(state)}</div>
         </div>
 
-        {error ? <div style={{ color: "crimson", whiteSpace: "pre-wrap" }}>{error}</div> : null}
+        {error ? (
+          <div style={{ color: "crimson", whiteSpace: "pre-wrap" }}>
+            {error}
+            {error.toLowerCase().includes("not logged in") ? (
+              <div style={{ marginTop: 8 }}>
+                <a href="/login?next=/upload" style={{ fontWeight: 900, textDecoration: "underline", color: "crimson" }}>
+                  Sign in →
+                </a>
+              </div>
+            ) : null}
+          </div>
+        ) : null}
 
         {cdnUrl ? (
           <div style={{ marginTop: 10, display: "grid", gap: 10 }}>
