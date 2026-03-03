@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { createBrowserClient } from "@/lib/supabase/client";
+import { supabase } from "@/lib/supabase/client";
 
 const linkStyle = {
   padding: "8px 14px",
@@ -17,7 +17,6 @@ const linkStyle = {
 
 export default function NavAuth({ signedIn }: { signedIn: boolean }) {
   const handleSignIn = async () => {
-    const supabase = createBrowserClient();
     const origin =
       typeof window !== "undefined"
         ? process.env.NEXT_PUBLIC_SITE_URL || window.location.origin

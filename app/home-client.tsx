@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { createBrowserClient } from "@/lib/supabase/client";
+import { supabase } from "@/lib/supabase/client";
 
 const btnBase = {
   padding: "10px 20px",
@@ -15,14 +15,14 @@ const btnBase = {
 
 export default function HomeClient({ email }: { email: string | null }) {
   const handleSignIn = async () => {
-    const supabase = createBrowserClient();
     const origin =
       typeof window !== "undefined"
-        ? process.env.NEXT_PUBLIC_SITE_URL || window.location.origin
+        ? (process.env.NEXT_PUBLIC_SITE_URL || window.location.origin)
         : "";
+    const redirectTo = `${origin}/auth/callback`;
     await supabase.auth.signInWithOAuth({
       provider: "google",
-      options: { redirectTo: `${origin}/auth/callback` },
+      options: { redirectTo },
     });
   };
 

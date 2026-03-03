@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import HomeClient from "./home-client";
+import AuthDebug from "./components/AuthDebug";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -130,6 +131,8 @@ export default async function HomePage() {
             Get started below.
           </p>
         </div>
+
+        <AuthDebug />
       </section>
     </main>
   );

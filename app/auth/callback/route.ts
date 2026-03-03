@@ -1,24 +1,34 @@
-import { NextResponse } from "next/server";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { cookies } from "next/headers";
+import { NextRequest, NextResponse } from "next/server";
+import { createServerClient } from "@supabase/ssr";
 
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
   const url = new URL(request.url);
   const code = url.searchParams.get("code");
 
-  if (!code) return NextResponse.redirect(new URL("/", url.origin));
+  if (!code) return NextResponse.redirect(new URL("/?error=missing_code", url.origin));
 
-  const store = await cookies();
-  const supabase = await createSupabaseServerClient(store);
+  const response = NextResponse.redirect(new URL("/protected", url.origin));
+
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return request.cookies.getAll();
+        },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value, options }) => {
+            response.cookies.set(name, value, options);
+          });
+        },
+      },
+    }
+  );
+
   const { error } = await supabase.auth.exchangeCodeForSession(code);
 
-  if (error) return NextResponse.redirect(new URL("/?error=oauth", url.origin));
+  if (error) return NextResponse.redirect(new URL("/?error=oauth_exchange_failed", url.origin));
 
-  const nextPath = store.get("next_path")?.value;
-  const safeNext =
-    nextPath && typeof nextPath === "string" && nextPath.startsWith("/") && !nextPath.startsWith("//")
-      ? nextPath
-      : "/app";
-
-  return NextResponse.redirect(new URL(safeNext, url.origin));
+  return response;
 }

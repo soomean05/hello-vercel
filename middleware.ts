@@ -29,9 +29,11 @@ export async function middleware(request: NextRequest) {
     }
   );
 
-  const { data: { session } } = await supabase.auth.getSession();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
-  if (isProtected(request.nextUrl.pathname) && !session) {
+  if (isProtected(request.nextUrl.pathname) && !user) {
     return NextResponse.redirect(new URL("/", request.url));
   }
 
@@ -43,9 +45,12 @@ export const config = {
     "/app",
     "/app/(.*)",
     "/protected",
-    "/protected/(.*)",
+    "/protected/:path*",
     "/rate",
+    "/rate/:path*",
     "/upload",
+    "/upload/:path*",
+    "/auth/callback",
     "/api/auth/token",
     "/api/vote",
     "/api/pipeline/(.*)",
