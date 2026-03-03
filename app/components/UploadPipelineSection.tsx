@@ -45,23 +45,12 @@ export default function UploadPipelineSection() {
     return `${file.name} (${Math.round(file.size / 1024)} KB, ${file.type || "unknown type"})`;
   }, [file]);
 
-async function getAccessToken(): Promise<string> {
-  if (!supabase) {
-    throw new Error(
-      "Supabase is not configured. Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY."
-    );
+  async function assertLoggedIn() {
+    const { data, error } = await supabase.auth.getSession();
+    if (error || !data.session) {
+      throw new Error("Not logged in. Please sign in and try again.");
+    }
   }
-
-  const { data, error } = await supabase.auth.getSession();
-  if (error) throw new Error(error.message);
-
-  const token = data.session?.access_token;
-  if (!token) {
-    throw new Error("No access token found. Please sign in again.");
-  }
-
-  return token;
-}
 
   async function runPipeline() {
     setError(null);
@@ -89,15 +78,13 @@ async function getAccessToken(): Promise<string> {
     }
 
     try {
-      const token = await getAccessToken();
-      const base = "https://api.almostcrackd.ai";
+      await assertLoggedIn();
 
       // STEP 1: presigned URL
       setState("getting_url");
-      const s1 = await fetch(`${base}/pipeline/generate-presigned-url`, {
+      const s1 = await fetch(`/api/pipeline/generate-presigned-url`, {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
@@ -134,10 +121,9 @@ async function getAccessToken(): Promise<string> {
 
       // STEP 3: register image URL
       setState("registering");
-      const s3 = await fetch(`${base}/pipeline/upload-image-from-url`, {
+      const s3 = await fetch(`/api/pipeline/upload-image-from-url`, {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
@@ -158,10 +144,9 @@ async function getAccessToken(): Promise<string> {
 
       // STEP 4: generate captions
       setState("generating");
-      const s4 = await fetch(`${base}/pipeline/generate-captions`, {
+      const s4 = await fetch(`/api/pipeline/generate-captions`, {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ imageId: newImageId }),

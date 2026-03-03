@@ -1,33 +1,11 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export async function POST(req: Request) {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-
-  const authHeader = req.headers.get("authorization") || "";
-  const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : null;
-
-  if (!token) {
-    return NextResponse.json({ error: "Not logged in" }, { status: 401 });
-  }
-
-  // ✅ IMPORTANT: create client that includes the user's JWT in every request
-  const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-    global: {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    },
-  });
-
-  // Validate token -> user (optional but nice)
+  const supabase = await createSupabaseServerClient();
   const { data: userRes, error: userErr } = await supabase.auth.getUser();
   const user = userRes?.user;
-
-  if (userErr || !user) {
-    return NextResponse.json({ error: "Not logged in" }, { status: 401 });
-  }
+  if (userErr || !user) return NextResponse.json({ error: "Not logged in" }, { status: 401 });
 
   let body: any;
   try {
@@ -58,7 +36,6 @@ export async function POST(req: Request) {
         vote_value: vote,
         created_datetime_utc: now,
         modified_datetime_utc: now,
-        profile_id: user.id, // optional, but keeps your table consistent
       },
       { onConflict: "caption_id,user_id" }
     );

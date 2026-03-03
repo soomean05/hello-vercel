@@ -38,8 +38,6 @@ export default function PipelineRightCard() {
   }, [file]);
 
   async function getJWTOrNull(): Promise<string | null> {
-    if (!supabase) return null;
-
     const { data, error } = await supabase.auth.getSession();
     if (error) return null;
     return data.session?.access_token ?? null; 
@@ -104,15 +102,12 @@ export default function PipelineRightCard() {
       return;
     }
 
-    const base = "https://api.almostcrackd.ai";
-
     try {
       // Step 1
       setStage("s1");
-      const r1 = await fetch(`${base}/pipeline/generate-presigned-url`, {
+      const r1 = await fetch(`/api/pipeline/generate-presigned-url`, {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${jwt}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ contentType: file.type || "image/jpeg" }),
@@ -135,10 +130,9 @@ export default function PipelineRightCard() {
 
       // Step 3
       setStage("s3");
-      const r3 = await fetch(`${base}/pipeline/upload-image-from-url`, {
+      const r3 = await fetch(`/api/pipeline/upload-image-from-url`, {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${jwt}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ imageUrl: newCdnUrl, isCommonUse: false }),
@@ -151,10 +145,9 @@ export default function PipelineRightCard() {
 
       // Step 4
       setStage("s4");
-      const r4 = await fetch(`${base}/pipeline/generate-captions`, {
+      const r4 = await fetch(`/api/pipeline/generate-captions`, {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${jwt}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ imageId: newImageId }),

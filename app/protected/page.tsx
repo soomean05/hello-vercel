@@ -1,15 +1,13 @@
 // app/protected/page.tsx
 import { redirect } from "next/navigation";
-import UploadAndCaption from "./upload-and-caption";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import SignOutButton from "./signout-button";
 
 export default async function ProtectedPage() {
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase.auth.getUser();
 
   if (error || !data.user) {
-    redirect("/login");
+    redirect("/login?next=/protected");
   }
 
   return (
@@ -27,7 +25,7 @@ export default async function ProtectedPage() {
       <section
         style={{
           width: "100%",
-          maxWidth: 820,
+          maxWidth: 720,
           background: "white",
           borderRadius: 18,
           padding: 26,
@@ -35,57 +33,59 @@ export default async function ProtectedPage() {
           border: "1px solid rgba(0,0,0,0.06)",
         }}
       >
-        <header
-          style={{
-            display: "flex",
-            alignItems: "flex-start",
-            justifyContent: "space-between",
-            gap: 12,
-          }}
-        >
-          <div>
-            <h1 style={{ margin: 0, fontSize: 28 }}>
-              Image Upload Pipeline
-            </h1>
-            <p style={{ marginTop: 8, color: "#444" }}>
-              Signed in as: <strong>{data.user.email}</strong>
-            </p>
-          </div>
+        <h1 style={{ margin: 0, fontSize: 28 }}>Protected</h1>
+        <p style={{ marginTop: 8, color: "#444" }}>
+          You are logged in as <strong>{data.user.email ?? data.user.id}</strong>
+        </p>
 
-          <SignOutButton />
-        </header>
-
-        <hr style={{ margin: "18px 0", borderTop: "1px solid #eee" }} />
-
-        {/* PIPELINE SECTION */}
-        <UploadAndCaption />
-
-        {/* RATINGS SECTION */}
-        <div
-          id="ratings"
-          style={{
-            marginTop: 60,
-            paddingTop: 24,
-            borderTop: "1px solid #eee",
-          }}
-        >
-          <h2 style={{ marginBottom: 12 }}>Ratings Section</h2>
-
-          <p style={{ color: "#555", marginBottom: 16 }}>
-            This is where users can rate captions stored in the database.
-          </p>
-
-          {/* TODO: Insert your existing voting component here */}
-          <div
+        <div style={{ display: "flex", gap: 12, marginTop: 18, flexWrap: "wrap" }}>
+          <a
+            href="/rate"
             style={{
-              padding: 16,
+              padding: "10px 14px",
               borderRadius: 12,
-              background: "#fafafa",
-              border: "1px solid #eee",
+              border: "1px solid rgba(0,0,0,0.12)",
+              background: "white",
+              fontWeight: 900,
+              textDecoration: "none",
+              color: "#111",
+              display: "inline-block",
             }}
           >
-            Your voting UI goes here.
-          </div>
+            Go to /rate
+          </a>
+          <a
+            href="/upload"
+            style={{
+              padding: "10px 14px",
+              borderRadius: 12,
+              border: "1px solid rgba(0,0,0,0.12)",
+              background: "white",
+              fontWeight: 900,
+              textDecoration: "none",
+              color: "#111",
+              display: "inline-block",
+            }}
+          >
+            Go to /upload
+          </a>
+          <a
+            href="/login"
+            style={{
+              marginLeft: "auto",
+              padding: "10px 14px",
+              borderRadius: 12,
+              border: "1px solid rgba(0,0,0,0.12)",
+              background: "white",
+              fontWeight: 900,
+              textDecoration: "none",
+              color: "#111",
+              display: "inline-block",
+              opacity: 0.75,
+            }}
+          >
+            Sign out (from /login)
+          </a>
         </div>
       </section>
     </main>
