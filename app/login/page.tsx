@@ -16,6 +16,7 @@ function LoginInner() {
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
 
+  // If already logged in, go to next
   useEffect(() => {
     (async () => {
       const { data } = await supabase.auth.getSession();
@@ -40,9 +41,7 @@ function LoginInner() {
       const { error } = await supabase.auth.signUp({ email, password });
       if (error) throw error;
 
-      setMsg(
-        "Account created. If email confirmation is required, check your email. Otherwise you can sign in now."
-      );
+      setMsg("Account created. If email confirmation is required, check your email. Otherwise you can sign in now.");
       setMode("signin");
     } catch (e: any) {
       setMsg(e?.message ?? String(e));
@@ -151,7 +150,7 @@ function LoginInner() {
 
 export default function LoginPage() {
   return (
-    <Suspense fallback={<div style={{ padding: 24 }}>Loading…</div>}>
+    <Suspense fallback={<div style={{ padding: 24, fontFamily: "system-ui" }}>Loading…</div>}>
       <LoginInner />
     </Suspense>
   );
