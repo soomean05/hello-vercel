@@ -1,73 +1,54 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-export type CaptionRow = {
-  id: string | number;
-  text?: string | null;
-  content?: string | null;
-  caption?: string | null;
-  created_at?: string | null;
-  image_id?: string | null;
-  images?: { url?: string | null } | null;
-};
-
 export type CaptionItem = {
   id: string | number;
   content: string;
   imageUrl: string | null;
 };
 
+/** Derive caption text from row using common column names (schema-agnostic) */
 function getCaptionText(row: Record<string, unknown>): string {
-  const t = row.text ?? row.caption ?? row.content;
+  const t =
+    row.text ??
+    row.caption_text ??
+    row.captionText ??
+    row.content ??
+    row.body ??
+    row.title ??
+    row.name ??
+    row.caption;
   if (t != null && typeof t === "string") return t;
-  return "(no caption text column found)";
+  return "[no caption text column found]";
 }
 
-/** Safe caption fetch: never select captions.image_url, fallbacks for schema variations */
+/** Derive image URL from row (only if row has it; never from captions.image_url if that column doesn't exist) */
+function getImageUrlFromRow(row: Record<string, unknown>): string | null {
+  const u = row.image_url ?? row.url ?? row.cdn_url;
+  if (u != null && typeof u === "string") return u;
+  return null;
+}
+
+/**
+ * Safe caption fetch: uses select("*") so we never request missing columns.
+ * Derives caption text and image URL from whatever columns exist.
+ */
 export async function fetchCaptionsSafe(
   supabase: SupabaseClient,
   limit = 50
 ): Promise<{ items: CaptionItem[]; error: string | null }> {
-  let rows: CaptionRow[] = [];
-  let urlByImageId = new Map<string, string>();
-  let data: unknown[] | null = null;
-  let error: { message: string } | null = null;
-
-  const selects = [
-    "id, content, created_at, image_id",
-    "id, content, created_at",
-    "id, text, created_at, image_id",
-    "id, text, created_at",
-    "id, caption, created_at, image_id",
-    "id, caption, created_at",
-  ];
-
-  for (const selectStr of selects) {
-    const { data: d, error: e } = await supabase
-      .from("captions")
-      .select(selectStr)
-      .limit(limit);
-    if (!e) {
-      data = d;
-      error = null;
-      break;
-    }
-    error = e;
-    if (
-      e.message?.includes("does not exist") ||
-      e.message?.includes("column")
-    ) {
-      continue;
-    }
-    return { items: [], error: e.message };
-  }
+  const { data, error } = await supabase
+    .from("captions")
+    .select("*")
+    .limit(limit);
 
   if (error) {
     return { items: [], error: error.message };
   }
 
-  rows = (data ?? []) as CaptionRow[];
+  const rows = (data ?? []) as Record<string, unknown>[];
+  const urlByImageId = new Map<string, string>();
 
-  const hasImageId = rows.some((c) => c?.image_id);
+  const hasImageId = rows.some((c) => c?.image_id != null);
   if (hasImageId) {
     const imageIds = Array.from(
       new Set(rows.map((c) => c?.image_id).filter(Boolean).map(String))
@@ -78,7 +59,7 @@ export async function fetchCaptionsSafe(
         .select("id, url")
         .in("id", imageIds);
       if (!imgErr && images) {
-        images.forEach((im: { id?: string; url?: string }) => {
+        (images as { id?: string; url?: string }[]).forEach((im) => {
           if (im?.id && im?.url) urlByImageId.set(String(im.id), String(im.url));
         });
       }
@@ -88,9 +69,10 @@ export async function fetchCaptionsSafe(
   const items: CaptionItem[] = rows
     .map((c) => {
       const id = c?.id;
-      const content = getCaptionText(c as Record<string, unknown>);
-      const imageUrl = urlByImageId.get(String(c?.image_id)) ?? null;
-      if (!id) return null;
+      const content = getCaptionText(c);
+      const imageUrl =
+        getImageUrlFromRow(c) ?? urlByImageId.get(String(c?.image_id)) ?? null;
+      if (id == null) return null;
       return { id, content, imageUrl };
     })
     .filter((x): x is CaptionItem => x !== null);
