@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import Navbar from "../components/Navbar";
 import RateClient from "./rate-client";
 
 export const dynamic = "force-dynamic";
@@ -10,7 +11,7 @@ export default async function RatePage() {
   const { data: userRes } = await supabase.auth.getUser();
 
   const email = userRes.user?.email;
-  if (!userRes.user || !email) redirect("/login?next=/rate");
+  if (!userRes.user || !email) redirect("/");
 
   const { data: captions, error: capErr } = await supabase
     .from("captions")
@@ -61,5 +62,10 @@ export default async function RatePage() {
     })
     .filter(Boolean) as { id: string | number; content: string; imageUrl: string | null }[];
 
-  return <RateClient email={email} items={items} />;
+  return (
+    <>
+      <Navbar />
+      <RateClient email={email} items={items} />
+    </>
+  );
 }

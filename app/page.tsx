@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import HomeClient from "./home-client";
+import NavAuth from "./components/NavAuth";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -36,40 +37,7 @@ export default async function HomePage() {
         >
           CaptionRater
         </Link>
-        {user ? (
-          <a
-            href="/api/auth/signout"
-            style={{
-              padding: "8px 14px",
-              borderRadius: 12,
-              border: "1px solid rgba(0,0,0,0.12)",
-              background: "white",
-              fontWeight: 700,
-              fontSize: 14,
-              textDecoration: "none",
-              color: "#111",
-            }}
-          >
-            Sign out
-          </a>
-        ) : (
-          <Link
-            href="/login"
-            style={{
-              padding: "8px 14px",
-              borderRadius: 12,
-              border: "1px solid rgba(0,0,0,0.12)",
-              background: "white",
-              fontWeight: 700,
-              cursor: "pointer",
-              fontSize: 14,
-              textDecoration: "none",
-              color: "#111",
-            }}
-          >
-            Sign in
-          </Link>
-        )}
+        <NavAuth signedIn={!!user} />
       </header>
 
       <section
@@ -106,6 +74,36 @@ export default async function HomePage() {
             <li>Upload images → generate captions</li>
           </ul>
           <div style={{ marginTop: 20, display: "flex", gap: 12, flexWrap: "wrap" }}>
+            <Link
+              href="/list"
+              style={{
+                padding: "12px 18px",
+                borderRadius: 14,
+                border: "1px solid rgba(0,0,0,0.14)",
+                background: "white",
+                color: "#111",
+                textDecoration: "none",
+                fontWeight: 700,
+                fontSize: 14,
+              }}
+            >
+              DB Read Demo
+            </Link>
+            <Link
+              href="/protected"
+              style={{
+                padding: "12px 18px",
+                borderRadius: 14,
+                border: "1px solid rgba(0,0,0,0.14)",
+                background: "white",
+                color: "#111",
+                textDecoration: "none",
+                fontWeight: 700,
+                fontSize: 14,
+              }}
+            >
+              Protected
+            </Link>
             <Link
               href="/rate"
               style={{

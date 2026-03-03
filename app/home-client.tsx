@@ -1,8 +1,22 @@
 "use client";
 
 import Link from "next/link";
+import { createBrowserClient } from "@/lib/supabase/client";
 
 export default function HomeClient({ email }: { email: string | null }) {
+  const handleSignIn = async () => {
+    const supabase = createBrowserClient();
+    const origin =
+      typeof window !== "undefined"
+        ? process.env.NEXT_PUBLIC_SITE_URL || window.location.origin
+        : "";
+    const redirectTo = `${origin}/auth/callback`;
+    await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: { redirectTo },
+    });
+  };
+
   if (email) {
     return (
       <div
@@ -51,7 +65,7 @@ export default function HomeClient({ email }: { email: string | null }) {
             Upload image
           </Link>
           <Link
-            href="/dashboard"
+            href="/protected"
             style={{
               display: "block",
               padding: "14px 18px",
@@ -65,7 +79,7 @@ export default function HomeClient({ email }: { email: string | null }) {
               opacity: 0.9,
             }}
           >
-            Dashboard
+            Protected dashboard
           </Link>
         </div>
       </div>
@@ -83,23 +97,26 @@ export default function HomeClient({ email }: { email: string | null }) {
       }}
     >
       <div style={{ fontSize: 16, fontWeight: 900, marginBottom: 8 }}>Quick Actions</div>
-      <Link
-        href="/login"
+      <button
+        onClick={handleSignIn}
+        type="button"
         style={{
           display: "block",
+          width: "100%",
           padding: "16px 24px",
           borderRadius: 14,
           background: "black",
           color: "white",
-          textDecoration: "none",
+          border: "none",
           fontWeight: 800,
           textAlign: "center",
           fontSize: 16,
           marginBottom: 12,
+          cursor: "pointer",
         }}
       >
-        Continue with Google
-      </Link>
+        Sign in with Google
+      </button>
       <p style={{ margin: 0, fontSize: 12, color: "#777" }}>
         You need an account to rate or upload.
       </p>

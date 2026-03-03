@@ -1,2 +1,2 @@
-export { createSupabaseBrowserClient, supabaseBrowserClient } from "./browser";
+export { createBrowserClient, supabaseBrowserClient } from "./browser";
 

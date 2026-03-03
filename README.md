@@ -1,36 +1,58 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# CaptionRater – Project 1
 
-## Getting Started
-
-First, run the development server:
-
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
-
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Next.js (App Router) app with Supabase auth, DB reads, voting, and AlmostCrackd image-caption pipeline.
 
 ## Deploy on Vercel
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+1. Push to GitHub and connect the repo to Vercel.
+2. Configure environment variables (see below).
+3. **Disable deployment protection** so the app is publicly accessible.
+4. Deploy.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Environment Variables
+
+Set these in Vercel (or `.env.local` for local dev):
+
+| Variable | Description |
+|----------|-------------|
+| `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase anon (public) key |
+| `NEXT_PUBLIC_SITE_URL` | (Optional) App origin, e.g. `https://your-app.vercel.app`. Falls back to `window.location.origin` if unset. |
+
+**Supabase project reference:** `qihsgnfjqmkjmoowyfbn` (use env vars in code; do not hardcode keys).
+
+## Google OAuth (Supabase)
+
+1. In Supabase: Authentication → Providers → Google → enable.
+2. Use Client ID: `388960353527-fh4grc6mla425lg0e3g1hh67omtrdihd.apps.googleusercontent.com`
+3. Redirect URI must be: `https://<your-domain>/auth/callback` (e.g. `https://your-app.vercel.app/auth/callback`).
+
+## Local Development
+
+```bash
+npm install
+npm run dev
+```
+
+Open [http://localhost:3000](http://localhost:3000). For Google sign-in locally, add `http://localhost:3000/auth/callback` as a redirect URI in Supabase and optionally set `NEXT_PUBLIC_SITE_URL=http://localhost:3000`.
+
+## Routes
+
+| Route | Access | Description |
+|-------|--------|-------------|
+| `/` | Public | Homepage, sign in with Google |
+| `/list` | Public | DB read demo (20 rows from `captions`) |
+| `/protected` | Protected | Dashboard, links to rate/upload |
+| `/rate` | Protected | Vote on captions (thumbs up/down) |
+| `/upload` | Protected | Upload image → AlmostCrackd pipeline → captions |
+
+## AlmostCrackd Pipeline
+
+The upload flow calls `https://api.almostcrackd.ai`:
+
+1. `POST /pipeline/generate-presigned-url` → presignedUrl, cdnUrl  
+2. `PUT` file bytes to presignedUrl  
+3. `POST /pipeline/upload-image-from-url` → imageId  
+4. `POST /pipeline/generate-captions` → captions array  
+
+Supported image types: JPEG, PNG, WebP, GIF, HEIC.

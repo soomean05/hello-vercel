@@ -1,16 +1,16 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 
-export async function middleware(request: NextRequest) {
-  const response = NextResponse.next();
+const PROTECTED_PATHS = ["/protected", "/rate", "/upload"];
 
-  // Set next_path cookie for /login?next=... (pages cannot modify cookies).
-  if (request.nextUrl.pathname === "/login") {
-    const next = request.nextUrl.searchParams.get("next");
-    if (next && next.startsWith("/") && !next.startsWith("//")) {
-      response.cookies.set("next_path", next, { path: "/", sameSite: "lax", maxAge: 60 * 10 });
-    }
-  }
+function isProtected(pathname: string) {
+  return PROTECTED_PATHS.some((p) => pathname === p || pathname.startsWith(p + "/"));
+}
+
+export async function middleware(request: NextRequest) {
+  let response = NextResponse.next({
+    request: { headers: request.headers },
+  });
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -22,32 +22,22 @@ export async function middleware(request: NextRequest) {
         },
         setAll(cookiesToSet) {
           cookiesToSet.forEach(({ name, value, options }) => {
-            response.cookies.set({ name, value, ...options });
+            response.cookies.set(name, value, options);
           });
         },
       },
     }
   );
 
-  // Only gate /protected; allow /login through
-  if (request.nextUrl.pathname.startsWith("/protected")) {
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
+  const { data: { session } } = await supabase.auth.getSession();
 
-    if (!session) {
-      const url = request.nextUrl.clone();
-      url.pathname = "/login";
-      url.search = "";
-      url.searchParams.set("next", request.nextUrl.pathname);
-      return NextResponse.redirect(url);
-    }
+  if (isProtected(request.nextUrl.pathname) && !session) {
+    return NextResponse.redirect(new URL("/", request.url));
   }
 
   return response;
 }
 
 export const config = {
-  matcher: ["/login", "/protected/:path*"],
+  matcher: ["/protected", "/protected/(.*)", "/rate", "/upload"],
 };
-

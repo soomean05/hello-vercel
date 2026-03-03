@@ -30,7 +30,7 @@ export default function UploadClient() {
 
   async function signOut() {
     await fetch("/api/auth/signout", { method: "POST" }).catch(() => null);
-    router.replace("/login");
+    router.replace("/");
   }
 
   async function runPipeline() {
@@ -200,7 +200,7 @@ export default function UploadClient() {
               fontSize: 15,
             }}
           >
-            Upload & Generate
+            Generate Captions
           </button>
 
           {/* Step tracker */}
