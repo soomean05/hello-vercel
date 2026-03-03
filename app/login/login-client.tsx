@@ -35,24 +35,40 @@ export default function LoginClient({ next }: { next: string }) {
   }
 
   return (
-    <main style={{ minHeight: "100vh", padding: 24, fontFamily: "system-ui", background: "#f6f7f9" }}>
-      <div style={{ maxWidth: 520, margin: "0 auto", display: "grid", gap: 14 }}>
-        <header style={{ padding: 18, borderRadius: 18, background: "white", boxShadow: "0 10px 35px rgba(0,0,0,0.08)" }}>
-          <div style={{ fontSize: 24, fontWeight: 900 }}>Sign in</div>
-          <div style={{ opacity: 0.7, marginTop: 6 }}>Continue to: {next}</div>
-        </header>
-
-        <section style={{ padding: 18, borderRadius: 18, background: "white", boxShadow: "0 10px 35px rgba(0,0,0,0.08)", display: "grid", gap: 12 }}>
-          {msg ? <div style={{ color: msg.includes("created") ? "green" : "crimson" }}>{msg}</div> : null}
-
-          <button
-            onClick={continueWithGoogle}
-            disabled={busy}
-            style={{ padding: "12px 14px", borderRadius: 14, border: "1px solid rgba(0,0,0,0.15)", background: "white", fontWeight: 900, cursor: busy ? "not-allowed" : "pointer" }}
-          >
-            {busy ? "Working…" : "Continue with Google"}
-          </button>
-        </section>
+    <main style={{ minHeight: "100vh", padding: 24, fontFamily: "system-ui", background: "#f6f7f9", display: "grid", placeItems: "center" }}>
+      <div
+        style={{
+          maxWidth: 520,
+          width: "100%",
+          padding: 28,
+          borderRadius: 18,
+          background: "white",
+          boxShadow: "0 10px 35px rgba(0,0,0,0.08)",
+          border: "1px solid rgba(0,0,0,0.06)",
+          display: "grid",
+          gap: 16,
+        }}
+      >
+        <h1 style={{ margin: 0, fontSize: 24, fontWeight: 900 }}>Sign in</h1>
+        {msg ? <div style={{ color: "crimson", fontSize: 14 }}>{msg}</div> : null}
+        <button
+          onClick={continueWithGoogle}
+          disabled={busy}
+          style={{
+            padding: "14px 20px",
+            borderRadius: 14,
+            border: "1px solid rgba(0,0,0,0.15)",
+            background: "white",
+            fontWeight: 800,
+            fontSize: 16,
+            cursor: busy ? "not-allowed" : "pointer",
+          }}
+        >
+          {busy ? "Working…" : "Continue with Google"}
+        </button>
+        <p style={{ margin: 0, fontSize: 11, color: "#999" }}>
+          Redirects to /auth/callback
+        </p>
       </div>
     </main>
   );

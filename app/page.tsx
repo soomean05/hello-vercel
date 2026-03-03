@@ -1,183 +1,145 @@
-export default function HomePage() {
+import Link from "next/link";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
+import HomeClient from "./home-client";
+
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
+export default async function HomePage() {
+  const supabase = await createSupabaseServerClient();
+  const { data } = await supabase.auth.getUser();
+  const user = data.user;
+  const email = user?.email ?? null;
+
   return (
     <main
       style={{
         minHeight: "100vh",
-        display: "grid",
-        placeItems: "center",
-        padding: 24,
-        fontFamily:
-          '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
-        background: "linear-gradient(180deg, #f6f7f9 0%, #ffffff 100%)",
+        background: "#f6f7f9",
+        fontFamily: "system-ui",
       }}
     >
+      {/* Nav header */}
+      <header
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          padding: "16px 24px",
+          background: "white",
+          borderBottom: "1px solid rgba(0,0,0,0.06)",
+        }}
+      >
+        <Link
+          href="/"
+          style={{ fontSize: 18, fontWeight: 900, color: "#111", textDecoration: "none" }}
+        >
+          CaptionRater
+        </Link>
+        {user ? (
+          <a
+            href="/api/auth/signout"
+            style={{
+              padding: "8px 14px",
+              borderRadius: 12,
+              border: "1px solid rgba(0,0,0,0.12)",
+              background: "white",
+              fontWeight: 700,
+              fontSize: 14,
+              textDecoration: "none",
+              color: "#111",
+            }}
+          >
+            Sign out
+          </a>
+        ) : (
+          <Link
+            href="/login"
+            style={{
+              padding: "8px 14px",
+              borderRadius: 12,
+              border: "1px solid rgba(0,0,0,0.12)",
+              background: "white",
+              fontWeight: 700,
+              cursor: "pointer",
+              fontSize: 14,
+              textDecoration: "none",
+              color: "#111",
+            }}
+          >
+            Sign in
+          </Link>
+        )}
+      </header>
+
       <section
         style={{
           width: "100%",
           maxWidth: 900,
+          margin: "0 auto",
+          padding: 24,
           display: "grid",
-          gridTemplateColumns: "1.1fr 0.9fr",
+          gridTemplateColumns: "1fr 1fr",
           gap: 22,
           alignItems: "center",
         }}
       >
-        {/* LEFT: copy + buttons */}
+        {/* Left: Branding + description */}
         <div
           style={{
             background: "white",
             borderRadius: 18,
             padding: 28,
-            boxShadow: "0 10px 30px rgba(0,0,0,0.08)",
+            boxShadow: "0 10px 35px rgba(0,0,0,0.08)",
             border: "1px solid rgba(0,0,0,0.06)",
           }}
         >
-          <div
-            style={{
-              display: "inline-flex",
-              gap: 8,
-              alignItems: "center",
-              padding: "6px 10px",
-              borderRadius: 999,
-              background: "rgba(0,0,0,0.05)",
-              border: "1px solid rgba(0,0,0,0.06)",
-              fontSize: 12,
-              color: "#333",
-              marginBottom: 14,
-            }}
-          >
-            <span>🧪</span>
-            <span>Caption Pipeline Demo</span>
-          </div>
-
-          <h1 style={{ margin: 0, fontSize: 42, letterSpacing: -0.6, lineHeight: 1.05 }}>
-            Upload an image.
-            <br />
-            Get captions instantly.
+          <h1 style={{ margin: 0, fontSize: 36, letterSpacing: -0.5, lineHeight: 1.1 }}>
+            CaptionRater
           </h1>
-
-          <p style={{ marginTop: 14, fontSize: 16, color: "#444", lineHeight: 1.6 }}>
-            This app uploads an image using a presigned URL, registers it with the pipeline,
-            and generates multiple captions via the AlmostCrackd staging API.
+          <p style={{ marginTop: 10, fontSize: 16, color: "#444", lineHeight: 1.5 }}>
+            Upload memes, generate captions, and rate the funniest ones.
           </p>
-
-          <div style={{ marginTop: 18, display: "flex", gap: 12, flexWrap: "wrap" }}>
-            <a
-              href="/protected"
+          <ul style={{ marginTop: 16, paddingLeft: 20, color: "#444", lineHeight: 1.8 }}>
+            <li>Sign in with Google</li>
+            <li>Rate captions (👍 / 👎)</li>
+            <li>Upload images → generate captions</li>
+          </ul>
+          <div style={{ marginTop: 20, display: "flex", gap: 12, flexWrap: "wrap" }}>
+            <Link
+              href="/rate"
               style={{
-                display: "inline-flex",
-                alignItems: "center",
-                justifyContent: "center",
-                padding: "11px 16px",
-                borderRadius: 12,
+                padding: "12px 18px",
+                borderRadius: 14,
                 background: "black",
                 color: "white",
                 textDecoration: "none",
+                fontWeight: 700,
                 fontSize: 14,
-                fontWeight: 650,
               }}
             >
-              Open pipeline →
-            </a>
-
-            <a
-              href="/protected"
+              Rate captions
+            </Link>
+            <Link
+              href="/upload"
               style={{
-                display: "inline-flex",
-                alignItems: "center",
-                justifyContent: "center",
-                padding: "11px 16px",
-                borderRadius: 12,
+                padding: "12px 18px",
+                borderRadius: 14,
+                border: "1px solid rgba(0,0,0,0.14)",
                 background: "white",
                 color: "#111",
-                border: "1px solid rgba(0,0,0,0.14)",
                 textDecoration: "none",
+                fontWeight: 700,
                 fontSize: 14,
-                fontWeight: 650,
               }}
             >
-              Sign in
-            </a>
-          </div>
-
-          <div style={{ marginTop: 16, fontSize: 12, color: "#777" }}>
-            Tip: If you’re not signed in, you’ll be prompted to log in first.
+              Upload image
+            </Link>
           </div>
         </div>
 
-        {/* RIGHT: preview card (static) */}
-        <div
-          style={{
-            background: "white",
-            borderRadius: 18,
-            padding: 18,
-            boxShadow: "0 10px 30px rgba(0,0,0,0.08)",
-            border: "1px solid rgba(0,0,0,0.06)",
-          }}
-        >
-          <div
-            style={{
-              borderRadius: 14,
-              overflow: "hidden",
-              border: "1px solid rgba(0,0,0,0.08)",
-              background: "#eee",
-            }}
-          >
-            {/* Placeholder “image” so it doesn’t look empty */}
-            <div
-              style={{
-                height: 260,
-                display: "grid",
-                placeItems: "center",
-                background:
-                  "linear-gradient(135deg, rgba(0,0,0,0.10), rgba(0,0,0,0.02))",
-              }}
-            >
-              <div style={{ textAlign: "center", color: "#222" }}>
-                <div style={{ fontSize: 40 }}>🖼️</div>
-                <div style={{ marginTop: 6, fontSize: 12, color: "#555" }}>
-                  Upload preview
-                </div>
-              </div>
-            </div>
-
-            <div style={{ padding: 14 }}>
-              <div style={{ fontSize: 12, color: "#777", marginBottom: 6 }}>
-                Example output:
-              </div>
-
-              <div style={{ display: "grid", gap: 8 }}>
-                <div
-                  style={{
-                    padding: "10px 12px",
-                    borderRadius: 12,
-                    background: "#fafafa",
-                    border: "1px solid #eee",
-                    fontSize: 14,
-                    lineHeight: 1.35,
-                  }}
-                >
-                  “When your coach says ‘relax’ mid-match and you instantly forget how to breathe.”
-                </div>
-                <div
-                  style={{
-                    padding: "10px 12px",
-                    borderRadius: 12,
-                    background: "#fafafa",
-                    border: "1px solid #eee",
-                    fontSize: 14,
-                    lineHeight: 1.35,
-                  }}
-                >
-                  “POV: you’re locked in… until someone starts yelling advice from the stands.”
-                </div>
-              </div>
-
-              <div style={{ marginTop: 10, fontSize: 12, color: "#777" }}>
-                Static preview — real captions appear after upload.
-              </div>
-            </div>
-          </div>
-        </div>
+        {/* Right: Quick Actions */}
+        <HomeClient email={email} />
       </section>
     </main>
   );

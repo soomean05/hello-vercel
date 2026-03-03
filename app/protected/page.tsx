@@ -33,12 +33,15 @@ export default async function ProtectedPage() {
           border: "1px solid rgba(0,0,0,0.06)",
         }}
       >
-        <h1 style={{ margin: 0, fontSize: 28 }}>Protected</h1>
+        <h1 style={{ margin: 0, fontSize: 28 }}>You're signed in</h1>
         <p style={{ marginTop: 8, color: "#444" }}>
-          You are logged in as <strong>{data.user.email ?? data.user.id}</strong>
+          <strong>{data.user.email ?? data.user.id}</strong>
+        </p>
+        <p style={{ margin: 0, fontSize: 12, color: "#777" }}>
+          User ID: {data.user.id}
         </p>
 
-        <div style={{ display: "flex", gap: 12, marginTop: 18, flexWrap: "wrap" }}>
+        <div style={{ display: "flex", gap: 12, marginTop: 20, flexWrap: "wrap" }}>
           <a
             href="/rate"
             style={{
@@ -52,7 +55,7 @@ export default async function ProtectedPage() {
               display: "inline-block",
             }}
           >
-            Go to /rate
+            Go to Rate
           </a>
           <a
             href="/upload"
@@ -67,10 +70,10 @@ export default async function ProtectedPage() {
               display: "inline-block",
             }}
           >
-            Go to /upload
+            Go to Upload
           </a>
           <a
-            href="/login"
+            href="/api/auth/signout"
             style={{
               marginLeft: "auto",
               padding: "10px 14px",
@@ -81,10 +84,9 @@ export default async function ProtectedPage() {
               textDecoration: "none",
               color: "#111",
               display: "inline-block",
-              opacity: 0.75,
             }}
           >
-            Sign out (from /login)
+            Sign out
           </a>
         </div>
       </section>

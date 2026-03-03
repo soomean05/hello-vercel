@@ -1,101 +1,170 @@
-"use client";
+import Link from "next/link";
+import { redirect } from "next/navigation";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { supabase } from "@/lib/supabaseClient";
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
-export default function DashboardPage() {
-  const router = useRouter();
-  const [email, setEmail] = useState<string | null>(null);
+export default async function DashboardPage() {
+  const supabase = await createSupabaseServerClient();
+  const { data } = await supabase.auth.getUser();
+  if (!data.user) redirect("/login?next=/dashboard");
 
-useEffect(() => {
-  (async () => {
-    if (!supabase) {
-      router.replace("/");
-      return;
-    }
+  const userId = data.user.id;
 
-    const { data } = await supabase.auth.getSession();
-    if (!data.session) {
-      router.replace("/");
-      return;
-    }
-  })();
-}, [router]);
+  const [votesRes, uploadsRes] = await Promise.all([
+    supabase
+      .from("caption_votes")
+      .select("id, caption_id, vote_value, created_datetime_utc")
+      .eq("user_id", userId)
+      .order("created_datetime_utc", { ascending: false })
+      .limit(20),
+    supabase
+      .from("images")
+      .select("id, url, created_at")
+      .order("created_at", { ascending: false })
+      .limit(20),
+  ]);
 
-  async function signOut() {
-    await fetch("/api/auth/signout", { method: "POST" }).catch(() => null);
-    router.replace("/login");
-  }
+  const votes = votesRes.data ?? [];
+  const uploads = uploadsRes.data ?? [];
+
+  const card: React.CSSProperties = {
+    background: "white",
+    borderRadius: 18,
+    padding: 22,
+    boxShadow: "0 10px 35px rgba(0,0,0,0.08)",
+    border: "1px solid rgba(0,0,0,0.06)",
+  };
 
   return (
-    <main style={shell}>
-      <section style={card}>
-        <div style={{ display: "flex", justifyContent: "space-between", gap: 12 }}>
+    <main
+      style={{
+        minHeight: "100vh",
+        background: "#f6f7f9",
+        padding: 24,
+        fontFamily: "system-ui",
+      }}
+    >
+      <div style={{ maxWidth: 720, margin: "0 auto" }}>
+        <div
+          style={{
+            ...card,
+            marginBottom: 14,
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
+        >
           <div>
-            <div style={{ fontSize: 22, fontWeight: 950 }}>Choose what to do</div>
-            <div style={{ opacity: 0.65, marginTop: 4 }}>
-              {email ? `Logged in as ${email}` : "Logged in"}
-            </div>
+            <h1 style={{ margin: 0, fontSize: 22, fontWeight: 900 }}>Dashboard</h1>
+            <p style={{ margin: "4px 0 0 0", fontSize: 14, color: "#666" }}>
+              Signed in as <strong>{data.user.email ?? data.user.id}</strong>
+            </p>
           </div>
-          <button onClick={signOut} style={btn}>Sign out</button>
+          <Link
+            href="/api/auth/signout"
+            style={{
+              padding: "10px 14px",
+              borderRadius: 12,
+              border: "1px solid rgba(0,0,0,0.12)",
+              background: "white",
+              fontWeight: 700,
+              textDecoration: "none",
+              color: "#111",
+              fontSize: 14,
+            }}
+          >
+            Sign out
+          </Link>
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-          <button onClick={() => router.push("/rate")} style={choiceBtn}>
-            <div style={{ fontWeight: 950, fontSize: 18 }}>Rate captions</div>
-            <div style={{ opacity: 0.7, marginTop: 6 }}>
-              Vote 👍/👎 and save to caption_votes.
+        <div style={{ ...card, marginBottom: 14 }}>
+          <h2 style={{ margin: "0 0 12px 0", fontSize: 18 }}>My recent votes</h2>
+          {votes.length === 0 ? (
+            <p style={{ color: "#666", margin: 0 }}>No votes yet. Head to /rate to start.</p>
+          ) : (
+            <div style={{ display: "grid", gap: 8 }}>
+              {votes.map((v: any) => (
+                <div
+                  key={v.id}
+                  style={{
+                    padding: "10px 12px",
+                    borderRadius: 12,
+                    background: "#fafafa",
+                    border: "1px solid #eee",
+                    fontSize: 14,
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                  }}
+                >
+                  <span>Caption {v.caption_id} → {v.vote_value === 1 ? "👍" : "👎"}</span>
+                  <span style={{ fontSize: 12, color: "#777" }}>
+                    {v.created_datetime_utc ? new Date(v.created_datetime_utc).toLocaleDateString() : ""}
+                  </span>
+                </div>
+              ))}
             </div>
-          </button>
-
-          <button onClick={() => router.push("/upload")} style={choiceBtn}>
-            <div style={{ fontWeight: 950, fontSize: 18 }}>Upload image</div>
-            <div style={{ opacity: 0.7, marginTop: 6 }}>
-              AlmostCrackd pipeline → generates captions.
-            </div>
-          </button>
+          )}
         </div>
-      </section>
+
+        <div style={card}>
+          <h2 style={{ margin: "0 0 12px 0", fontSize: 18 }}>My uploads</h2>
+          {uploads.length === 0 ? (
+            <p style={{ color: "#666", margin: 0 }}>No uploads yet. Head to /upload to add images.</p>
+          ) : (
+            <div style={{ display: "grid", gap: 10 }}>
+              {uploads.map((u: any) => (
+                <div
+                  key={u.id}
+                  style={{
+                    display: "flex",
+                    gap: 12,
+                    alignItems: "center",
+                    padding: "10px 12px",
+                    borderRadius: 12,
+                    background: "#fafafa",
+                    border: "1px solid #eee",
+                  }}
+                >
+                  {u.url && (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={u.url}
+                      alt=""
+                      style={{ width: 48, height: 48, objectFit: "cover", borderRadius: 8 }}
+                    />
+                  )}
+                  <div style={{ flex: 1, fontSize: 14 }}>
+                    <span style={{ fontWeight: 600 }}>Image {u.id}</span>
+                    {u.created_at && (
+                      <span style={{ marginLeft: 8, fontSize: 12, color: "#777" }}>
+                        {new Date(u.created_at).toLocaleDateString()}
+                      </span>
+                    )}
+                  </div>
+                  <Link
+                    href="/rate"
+                    style={{
+                      padding: "6px 10px",
+                      borderRadius: 10,
+                      border: "1px solid rgba(0,0,0,0.12)",
+                      background: "white",
+                      fontSize: 12,
+                      fontWeight: 700,
+                      textDecoration: "none",
+                      color: "#111",
+                    }}
+                  >
+                    Rate
+                  </Link>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
     </main>
   );
 }
-
-const shell: React.CSSProperties = {
-  minHeight: "100vh",
-  background: "#f6f7f9",
-  padding: 24,
-  fontFamily: "system-ui",
-  display: "grid",
-  placeItems: "center",
-};
-
-const card: React.CSSProperties = {
-  width: "100%",
-  maxWidth: 720,
-  background: "white",
-  borderRadius: 22,
-  padding: 28,
-  boxShadow: "0 18px 50px rgba(0,0,0,0.08)",
-  display: "grid",
-  gap: 14,
-};
-
-const btn: React.CSSProperties = {
-  padding: "10px 14px",
-  borderRadius: 12,
-  border: "1px solid rgba(0,0,0,0.15)",
-  background: "white",
-  fontWeight: 800,
-  cursor: "pointer",
-  height: 42,
-};
-
-const choiceBtn: React.CSSProperties = {
-  padding: 18,
-  borderRadius: 18,
-  border: "1px solid rgba(0,0,0,0.08)",
-  background: "#fafafa",
-  cursor: "pointer",
-  textAlign: "left",
-};

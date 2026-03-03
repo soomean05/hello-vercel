@@ -38,28 +38,67 @@ export default function RateClient({
     setIdx((p) => Math.min(p + 1, randomized.length));
   }
 
+  const headerCard: React.CSSProperties = {
+    background: "white",
+    borderRadius: 18,
+    padding: "16px 20px",
+    boxShadow: "0 10px 35px rgba(0,0,0,0.08)",
+    border: "1px solid rgba(0,0,0,0.06)",
+    marginBottom: 14,
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    flexWrap: "wrap",
+    gap: 10,
+  };
+  const navBtn: React.CSSProperties = {
+    padding: "8px 12px",
+    borderRadius: 12,
+    border: "1px solid rgba(0,0,0,0.12)",
+    background: "white",
+    fontWeight: 700,
+    textDecoration: "none",
+    color: "#111",
+    fontSize: 14,
+  };
+  const mainCard: React.CSSProperties = {
+    background: "white",
+    borderRadius: 18,
+    padding: 22,
+    boxShadow: "0 10px 35px rgba(0,0,0,0.08)",
+    border: "1px solid rgba(0,0,0,0.06)",
+  };
+
   if (!items || items.length === 0) {
     return (
-      <main style={{ padding: 24, fontFamily: "system-ui" }}>
-        <h1 style={{ margin: 0 }}>Rate Captions</h1>
-        <p style={{ marginTop: 8, color: "#666" }}>
-          Signed in as <strong>{email}</strong>
-        </p>
-        <p style={{ marginTop: 16, color: "#666" }}>
-          No captions available yet. Upload some images first.
-        </p>
+      <main style={{ padding: 24, fontFamily: "system-ui", background: "#f6f7f9", minHeight: "100vh" }}>
+        <div style={{ maxWidth: 800, margin: "0 auto" }}>
+        <div style={headerCard}>
+          <div style={{ fontWeight: 900, fontSize: 20 }}>Rate captions</div>
+          <div style={{ display: "flex", gap: 10 }}>
+            <a href="/" style={navBtn}>Home</a>
+            <a href="/upload" style={navBtn}>Upload</a>
+          </div>
+        </div>
+        <div style={{ ...mainCard, padding: 28 }}>
+          <p style={{ color: "#666", margin: 0 }}>No captions available yet. Upload some images first.</p>
+        </div>
+        </div>
       </main>
     );
   }
 
   if (idx >= randomized.length) {
     return (
-      <main style={{ padding: 24, fontFamily: "system-ui" }}>
-        <h1 style={{ margin: 0 }}>Rate Captions</h1>
-        <p style={{ marginTop: 8, color: "#666" }}>
-          Signed in as <strong>{email}</strong>
-        </p>
-
+      <main style={{ padding: 24, fontFamily: "system-ui", background: "#f6f7f9", minHeight: "100vh" }}>
+        <div style={{ maxWidth: 800, margin: "0 auto" }}>
+        <div style={headerCard}>
+          <div style={{ fontWeight: 900, fontSize: 20 }}>Rate captions</div>
+          <div style={{ display: "flex", gap: 10 }}>
+            <a href="/" style={navBtn}>Home</a>
+            <a href="/upload" style={navBtn}>Upload</a>
+          </div>
+        </div>
         <div
           style={{
             marginTop: 16,
@@ -90,46 +129,28 @@ export default function RateClient({
             Shuffle again
           </button>
         </div>
+        </div>
       </main>
     );
   }
 
   return (
-    <main
-      style={{
-        minHeight: "100vh",
-        display: "grid",
-        placeItems: "center",
-        padding: 24,
-        fontFamily: "system-ui",
-        background: "linear-gradient(180deg, #f6f7f9 0%, #ffffff 100%)",
-      }}
-    >
-      <section
-        style={{
-          width: "100%",
-          maxWidth: 760,
-          background: "white",
-          borderRadius: 18,
-          padding: 22,
-          boxShadow: "0 12px 36px rgba(0,0,0,0.09)",
-          border: "1px solid rgba(0,0,0,0.06)",
-          display: "grid",
-          gap: 12,
-        }}
-      >
-        <header style={{ display: "flex", justifyContent: "space-between" }}>
-          <div>
-            <h1 style={{ margin: 0, fontSize: 26 }}>Rate Captions</h1>
-            <p style={{ marginTop: 6, color: "#666", marginBottom: 0 }}>
-              Signed in as <strong>{email}</strong>
-            </p>
+    <main style={{ padding: 24, fontFamily: "system-ui", background: "#f6f7f9", minHeight: "100vh" }}>
+      <div style={{ maxWidth: 800, margin: "0 auto" }}>
+        <div style={headerCard}>
+          <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+            <span style={{ fontWeight: 900, fontSize: 20 }}>Rate captions</span>
+            <span style={{ color: "#666", fontSize: 14 }}>
+              {idx + 1} / {randomized.length}
+            </span>
           </div>
-          <div style={{ color: "#666", fontSize: 13, paddingTop: 6 }}>
-            {idx + 1} / {randomized.length}
+          <div style={{ display: "flex", gap: 10 }}>
+            <a href="/" style={navBtn}>Home</a>
+            <a href="/upload" style={navBtn}>Upload</a>
           </div>
-        </header>
+        </div>
 
+        <div style={mainCard}>
         {current?.imageUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
@@ -137,45 +158,41 @@ export default function RateClient({
             alt="rating image"
             style={{
               width: "100%",
-              maxHeight: 420,
+              aspectRatio: "16 / 9",
               objectFit: "cover",
               borderRadius: 14,
               border: "1px solid #eee",
+              marginBottom: 14,
             }}
           />
         ) : (
           <div
             style={{
-              padding: 12,
+              padding: 40,
               borderRadius: 14,
               border: "1px dashed #ddd",
               color: "#777",
               background: "#fafafa",
+              marginBottom: 14,
+              aspectRatio: "16 / 9",
+              display: "grid",
+              placeItems: "center",
             }}
           >
-            No image URL for this caption (check your DB column mapping).
+            No image
           </div>
         )}
 
-        <div
-          style={{
-            padding: 12,
-            borderRadius: 14,
-            border: "1px solid #eee",
-            background: "#fafafa",
-            lineHeight: 1.4,
-            fontSize: 16,
-          }}
-        >
+        <div style={{ fontSize: 18, fontWeight: 900, marginBottom: 14, lineHeight: 1.4 }}>
           {current.content}
         </div>
 
-        <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+        <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
           <VoteButtons captionId={current.id} disabled={false} onVoted={next} />
-
           <button
             onClick={next}
             style={{
+              marginLeft: "auto",
               padding: "10px 14px",
               borderRadius: 12,
               border: "1px solid rgba(0,0,0,0.12)",
@@ -187,11 +204,8 @@ export default function RateClient({
             Skip →
           </button>
         </div>
-
-        <div style={{ fontSize: 12, color: "#777" }}>
-          Tip: voting automatically moves to the next item.
         </div>
-      </section>
+      </div>
     </main>
   );
 }
