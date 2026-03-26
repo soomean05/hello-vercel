@@ -7,18 +7,23 @@ export type CaptionItem = {
 };
 
 /** Derive caption text from row using common column names (schema-agnostic) */
-function getCaptionText(row: Record<string, unknown>): string {
-  const t =
+function getCaptionText(row: Record<string, unknown>): string | null {
+  // Primary source for caption text in this project.
+  const content = row.content;
+  if (typeof content === "string" && content.trim().length > 0) return content;
+
+  // Optional legacy fallbacks (only used if `content` isn't present).
+  const legacy =
     row.text ??
     row.caption_text ??
     row.captionText ??
-    row.content ??
     row.body ??
     row.title ??
     row.name ??
     row.caption;
-  if (t != null && typeof t === "string") return t;
-  return "[no caption text column found]";
+  if (typeof legacy === "string" && legacy.trim().length > 0) return legacy;
+
+  return null;
 }
 
 /** Derive image URL from row (only if row has it; never from captions.image_url if that column doesn't exist) */
@@ -29,8 +34,8 @@ function getImageUrlFromRow(row: Record<string, unknown>): string | null {
 }
 
 /**
- * Safe caption fetch: uses select("*") so we never request missing columns.
- * Derives caption text and image URL from whatever columns exist.
+ * Safe caption fetch: selects only the columns this project needs.
+ * Derives image URL from `images.url` via `captions.image_id`.
  */
 export async function fetchCaptionsSafe(
   supabase: SupabaseClient,
@@ -38,7 +43,7 @@ export async function fetchCaptionsSafe(
 ): Promise<{ items: CaptionItem[]; error: string | null }> {
   const { data, error } = await supabase
     .from("captions")
-    .select("*")
+    .select("id, content, image_id")
     .limit(limit);
 
   if (error) {
@@ -70,9 +75,14 @@ export async function fetchCaptionsSafe(
     .map((c) => {
       const id = c?.id;
       const content = getCaptionText(c);
+
+      // Skip rows with missing/empty caption text so the feed never shows
+      // broken placeholder text.
+      if (id == null || !content) return null;
+
       const imageUrl =
         getImageUrlFromRow(c) ?? urlByImageId.get(String(c?.image_id)) ?? null;
-      if (id == null) return null;
+
       return { id, content, imageUrl };
     })
     .filter((x): x is CaptionItem => x !== null);
