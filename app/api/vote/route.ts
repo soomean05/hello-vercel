@@ -21,6 +21,16 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const body = await req.json();
+    const { caption_id, vote } = body;
+
+    if (!caption_id || ![1, -1].includes(vote)) {
+      return NextResponse.json(
+        { error: "Invalid request body" },
+        { status: 400 }
+      );
+    }
+
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -45,53 +55,18 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const body = await req.json();
-    const { caption_id, vote } = body as { caption_id?: string | number; vote?: unknown };
-
-    if (!caption_id || ![1, -1].includes(vote as number)) {
-      return NextResponse.json(
-        { error: "Invalid request body" },
-        { status: 400 }
-      );
-    }
-
-    const voteValue = vote as 1 | -1;
-
-    const { error: insertError } = await supabase.from("caption_votes").insert({
+    const { error } = await supabase.from("caption_votes").insert({
       caption_id,
       profile_id: user.id,
       user_id: user.id,
-      vote_value: voteValue,
-      value: voteValue,
+      vote_value: vote,
       created_by_user_id: user.id,
       modified_by_user_id: user.id,
     });
 
-    // Preserve existing "upsert-like" behavior for duplicate vote rows
-    if (insertError) {
-      if (insertError.code === "23505") {
-        const { error: updateError } = await supabase
-          .from("caption_votes")
-          .update({
-            vote_value: voteValue,
-            value: voteValue,
-            modified_by_user_id: user.id,
-          })
-          .eq("profile_id", user.id)
-          .eq("caption_id", caption_id);
-
-        if (updateError) {
-          return NextResponse.json(
-            { error: updateError.message },
-            { status: 500 }
-          );
-        }
-
-        return NextResponse.json({ success: true }, { status: 200 });
-      }
-
+    if (error) {
       return NextResponse.json(
-        { error: insertError.message },
+        { error: error.message },
         { status: 500 }
       );
     }
@@ -100,7 +75,10 @@ export async function POST(req: NextRequest) {
   } catch (error) {
     console.error("Vote route error:", error);
     return NextResponse.json(
-      { error: "Internal server error" },
+      {
+        error:
+          error instanceof Error ? error.message : "Internal server error",
+      },
       { status: 500 }
     );
   }
