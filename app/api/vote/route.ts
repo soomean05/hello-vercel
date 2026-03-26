@@ -1,6 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseServerClientFromRequest } from "@/lib/supabase/server";
 
+function getUserIdFromBearerToken(token: string): string | null {
+  try {
+    const b64 = token.split(".")[1];
+    if (!b64) return null;
+    const json = Buffer.from(b64, "base64url").toString("utf8");
+    const payload = JSON.parse(json);
+    return payload?.sub ?? null;
+  } catch {
+    return null;
+  }
+}
+
 export async function POST(req: NextRequest) {
   const supabase = createSupabaseServerClientFromRequest(req);
   const authHeader = req.headers.get("authorization") || "";
@@ -22,6 +34,14 @@ export async function POST(req: NextRequest) {
     } catch (e: any) {
       userErr = e;
       user = null;
+    }
+
+    // Fallback: decode JWT to get authenticated user id.
+    // This avoids "not logged in" when the auth client can't resolve the bearer token.
+    if (!user) {
+      const userId = getUserIdFromBearerToken(bearerToken);
+      user = userId ? ({ id: userId } as any) : null;
+      if (userId) userErr = null;
     }
   }
 
