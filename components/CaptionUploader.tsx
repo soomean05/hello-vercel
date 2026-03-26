@@ -134,7 +134,7 @@ export default function CaptionUploader({
       if (sessErr0) throw sessErr0;
 
       const user = sess0.session?.user;
-      if (!user) throw new Error("Not logged in.");
+      if (!user) throw new Error("Not authenticated (401).");
 
       if (!pendingCdnUrl) throw new Error("Missing uploaded image URL.");
       if (generated.length === 0) throw new Error("No generated captions to save.");
@@ -145,7 +145,11 @@ export default function CaptionUploader({
       // Insert image
       const { data: imgRow, error: imgErr } = await supabase
         .from("images")
-        .insert({ url: pendingCdnUrl })
+        .insert({
+          url: pendingCdnUrl,
+          created_by_user_id: user.id,
+          modified_by_user_id: user.id,
+        })
         .select("id")
         .single();
       if (imgErr) throw imgErr;
@@ -158,6 +162,8 @@ export default function CaptionUploader({
         content: c,
         is_public: true,
         profile_id: user.id,
+        created_by_user_id: user.id,
+        modified_by_user_id: user.id,
       }));
 
       const { error: capErr } = await supabase.from("captions").insert(capRows);

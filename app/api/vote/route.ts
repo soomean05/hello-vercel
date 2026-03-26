@@ -40,7 +40,8 @@ export async function POST(req: NextRequest) {
     user_id: user.id,
     vote_value: voteValue,
     value: voteValue,
-    created_datetime_utc: new Date().toISOString(),
+    created_by_user_id: user.id,
+    modified_by_user_id: user.id,
   };
 
   const { error: insertErr } = await supabase.from("caption_votes").insert(payload);
@@ -52,7 +53,7 @@ export async function POST(req: NextRequest) {
         .update({
           vote_value: voteValue,
           value: voteValue,
-          modified_datetime_utc: new Date().toISOString(),
+          modified_by_user_id: user.id,
         })
         .eq("profile_id", user.id)
         .eq("caption_id", captionIdStr);

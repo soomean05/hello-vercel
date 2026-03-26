@@ -42,7 +42,11 @@ export async function POST(req: NextRequest) {
 
   const { data: imgRow, error: imgErr } = await supabase
     .from("images")
-    .insert({ url: imageUrl })
+    .insert({
+      url: imageUrl,
+      created_by_user_id: userId,
+      modified_by_user_id: userId,
+    })
     .select("id")
     .single();
 
@@ -53,6 +57,8 @@ export async function POST(req: NextRequest) {
     content: text,
     profile_id: userId,
     is_public: true,
+    created_by_user_id: userId,
+    modified_by_user_id: userId,
   }));
 
   const { error: capErr } = await supabase.from("captions").insert(capRows);
