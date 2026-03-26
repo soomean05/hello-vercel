@@ -23,19 +23,53 @@ export default function RateClient({
   email,
   items,
 }: {
-  email: string;
+  email?: string | null;
   items: Item[];
 }) {
   const supabase = useMemo(() => createSupabaseBrowserClient(), []);
   const [sessionMissing, setSessionMissing] = useState<boolean | null>(null);
+  const [sessionReady, setSessionReady] = useState(false);
+  const [sessionUserEmail, setSessionUserEmail] = useState<string | null>(null);
 
   const randomized = useMemo(() => shuffle(items), [items]);
   const [idx, setIdx] = useState(0);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      setSessionMissing(!data.session);
+    let mounted = true;
+
+    supabase.auth
+      .getSession()
+      .then(({ data }) => {
+        const email = data.session?.user?.email ?? null;
+        console.log("[rate page] session user email:", email);
+        if (!mounted) return;
+        setSessionUserEmail(email);
+        setSessionMissing(!data.session);
+        setSessionReady(true);
+      })
+      .catch((e) => {
+        console.log("[rate page] getSession error:", e);
+        if (!mounted) return;
+        setSessionUserEmail(null);
+        setSessionMissing(true);
+        setSessionReady(true);
+      });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      const email = session?.user?.email ?? null;
+      console.log("[rate page] auth state change:", event, "email:", email);
+      if (!mounted) return;
+      setSessionUserEmail(email);
+      setSessionMissing(!session);
+      setSessionReady(true);
     });
+
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, [supabase]);
 
   const current = randomized[idx];
@@ -234,7 +268,11 @@ export default function RateClient({
         </div>
 
         <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
-          <VoteButtons captionId={current.id} disabled={false} onVoted={next} />
+          <VoteButtons
+            captionId={current.id}
+            disabled={!sessionReady || sessionMissing === true}
+            onVoted={next}
+          />
           <button
             onClick={next}
             style={{

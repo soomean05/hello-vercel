@@ -29,7 +29,15 @@ export default function VoteButtons({
       const { data } = await supabase.auth.getSession();
       const token = data.session?.access_token;
 
+      console.log("[vote handler] getSession:", {
+        sessionPresent: !!data.session,
+        userEmail: data.session?.user?.email ?? null,
+        tokenPresent: !!token,
+        tokenLength: typeof token === "string" ? token.length : 0,
+      });
+
       if (!token) {
+        console.log("[vote handler] token missing - full session result:", data.session);
         alert("You must be logged in to vote.");
         setError("You must be logged in to vote.");
         return;

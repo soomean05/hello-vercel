@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 const btnBase = {
@@ -14,8 +14,10 @@ const btnBase = {
   display: "inline-block",
 } as const;
 
-export default function HomeClient({ email }: { email: string | null }) {
+export default function HomeClient() {
   const supabase = useMemo(() => createSupabaseBrowserClient(), []);
+  const [sessionEmail, setSessionEmail] = useState<string | null>(null);
+  const [sessionReady, setSessionReady] = useState(false);
 
   const handleSignIn = async () => {
     const origin =
@@ -29,7 +31,42 @@ export default function HomeClient({ email }: { email: string | null }) {
     });
   };
 
-  if (email) {
+  useEffect(() => {
+    let mounted = true;
+
+    supabase.auth
+      .getSession()
+      .then(({ data }) => {
+        const email = data.session?.user?.email ?? null;
+        console.log("[homepage] session user email:", email);
+        if (!mounted) return;
+        setSessionEmail(email);
+        setSessionReady(true);
+      })
+      .catch((e) => {
+        console.log("[homepage] getSession error:", e);
+        if (!mounted) return;
+        setSessionEmail(null);
+        setSessionReady(true);
+      });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      const email = session?.user?.email ?? null;
+      console.log("[homepage] auth state change:", event, "email:", email);
+      if (!mounted) return;
+      setSessionEmail(email);
+      setSessionReady(true);
+    });
+
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
+  }, [supabase]);
+
+  if (sessionReady && sessionEmail) {
     return (
       <Link
         href="/app"
@@ -56,7 +93,7 @@ export default function HomeClient({ email }: { email: string | null }) {
         border: "none",
       }}
     >
-      Sign in with Google
+      {sessionReady ? "Sign in with Google" : "Checking session…"}
     </button>
   );
 }

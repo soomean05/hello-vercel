@@ -1,5 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createSupabaseServerClientFromRequest } from "@/lib/supabase/server";
+import { createServerClient } from "@supabase/ssr";
+
+function extractBearerToken(authHeader: string | null): string | null {
+  if (!authHeader) return null;
+  const trimmed = authHeader.trim();
+  if (!trimmed.toLowerCase().startsWith("bearer ")) return null;
+  const token = trimmed.slice("bearer ".length).trim();
+  return token.length > 0 ? token : null;
+}
 
 function getUserIdFromBearerToken(token: string): string | null {
   try {
@@ -14,38 +22,73 @@ function getUserIdFromBearerToken(token: string): string | null {
 }
 
 export async function POST(req: NextRequest) {
-  const supabase = createSupabaseServerClientFromRequest(req);
-  const authHeader = req.headers.get("authorization") || "";
-  const bearerToken = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : null;
+  const authHeader = req.headers.get("authorization");
+  const bearerToken = extractBearerToken(authHeader);
 
-  // Prefer cookie/session auth first (existing behavior), but fall back to bearer token auth
-  // so voting works end-to-end even if cookies aren't present for this request.
-  const { data: userData0, error: userErr0 } = await supabase.auth.getUser();
-  let user = userData0.user;
-  let userErr = userErr0;
+  console.log("[vote api] authorization header present:", !!authHeader, "bearerToken present:", !!bearerToken);
 
-  if ((!user || userErr) && bearerToken) {
-    try {
-      const { data: userData1, error: userErr1 } = await (supabase.auth as any).getUser(
-        bearerToken
-      );
-      user = userData1?.user;
-      userErr = userErr1;
-    } catch (e: any) {
-      userErr = e;
-      user = null;
-    }
-
-    // Fallback: decode JWT to get authenticated user id.
-    // This avoids "not logged in" when the auth client can't resolve the bearer token.
-    if (!user) {
-      const userId = getUserIdFromBearerToken(bearerToken);
-      user = userId ? ({ id: userId } as any) : null;
-      if (userId) userErr = null;
-    }
+  if (!bearerToken) {
+    return NextResponse.json(
+      {
+        error: "Not authenticated",
+        details: {
+          reason: "missing_or_invalid_authorization_header",
+          hasAuthorizationHeader: !!authHeader,
+        },
+      },
+      { status: 401 }
+    );
   }
 
-  if (userErr || !user) return NextResponse.json({ error: "Not logged in" }, { status: 401 });
+  const decodedUserId = getUserIdFromBearerToken(bearerToken);
+
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return req.cookies.getAll();
+        },
+        setAll() {
+          // Route handler: no cookie refresh needed for this endpoint.
+        },
+      },
+      // Ensure PostgREST/RLS sees the bearer token even when cookies are absent.
+      global: {
+        headers: {
+          Authorization: `Bearer ${bearerToken}`,
+        },
+      },
+    } as any
+  );
+
+  let user: any = decodedUserId ? { id: decodedUserId } : null;
+  let supabaseAuthError: string | null = null;
+  try {
+    const { data, error } = await (supabase.auth as any).getUser(bearerToken);
+    if (error) {
+      supabaseAuthError = error.message ?? String(error);
+    } else if (data?.user) {
+      user = data.user;
+    }
+  } catch (e: any) {
+    supabaseAuthError = e?.message ?? String(e);
+  }
+
+  if (!user?.id) {
+    return NextResponse.json(
+      {
+        error: "Not authenticated",
+        details: {
+          reason: "invalid_token_or_missing_sub",
+          decodedUserId,
+          supabaseAuthError,
+        },
+      },
+      { status: 401 }
+    );
+  }
 
   let body: Record<string, unknown>;
   try {

@@ -1,4 +1,3 @@
-import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import Navbar from "../components/Navbar";
 import RateClient from "./rate-client";
@@ -10,10 +9,6 @@ export const revalidate = 0;
 
 export default async function RatePage() {
   const supabase = await createSupabaseServerClient();
-  const { data: userRes } = await supabase.auth.getUser();
-
-  const email = userRes.user?.email;
-  if (!userRes.user || !email) redirect("/");
 
   const { items, error: capErr } = await fetchCaptionsSafe(supabase, 200);
 
@@ -60,7 +55,7 @@ export default async function RatePage() {
   return (
     <>
       <Navbar />
-      <RateClient email={email} items={items} />
+      <RateClient email={null} items={items} />
     </>
   );
 }

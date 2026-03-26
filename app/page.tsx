@@ -1,16 +1,10 @@
 import Link from "next/link";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
 import HomeClient from "./home-client";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 export default async function HomePage() {
-  const supabase = await createSupabaseServerClient();
-  const { data } = await supabase.auth.getUser();
-  const user = data.user;
-  const email = user?.email ?? null;
-
   return (
     <main
       style={{
@@ -42,7 +36,7 @@ export default async function HomePage() {
         >
           CaptionRater
         </Link>
-        <HomeClient email={email} />
+        <HomeClient />
       </header>
 
       <section
