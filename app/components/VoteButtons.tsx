@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { getAuthToken } from "@/app/lib/getAuthToken";
+import { useMemo, useState } from "react";
+import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 type Vote = 1 | -1;
 
@@ -14,6 +14,7 @@ export default function VoteButtons({
   disabled: boolean;
   onVoted?: () => void;
 }) {
+  const supabase = useMemo(() => createSupabaseBrowserClient(), []);
   const [loading, setLoading] = useState<Vote | null>(null);
   const [selected, setSelected] = useState<Vote | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -25,15 +26,25 @@ export default function VoteButtons({
     setError(null);
 
     try {
-      const token = await getAuthToken();
-      const headers: Record<string, string> = { "Content-Type": "application/json" };
-      if (token) headers.Authorization = `Bearer ${token}`;
+      const { data } = await supabase.auth.getSession();
+      const token = data.session?.access_token;
+
+      if (!token) {
+        alert("You must be logged in to vote.");
+        setError("You must be logged in to vote.");
+        return;
+      }
 
       const res = await fetch("/api/vote", {
         method: "POST",
-        headers,
-        credentials: "include",
-        body: JSON.stringify({ captionId, direction: value === 1 ? "up" : "down" }),
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          caption_id: captionId,
+          vote: value,
+        }),
       });
 
       if (res.ok) {

@@ -3,7 +3,28 @@ import { createSupabaseServerClientFromRequest } from "@/lib/supabase/server";
 
 export async function POST(req: NextRequest) {
   const supabase = createSupabaseServerClientFromRequest(req);
-  const { data: { user }, error: userErr } = await supabase.auth.getUser();
+  const authHeader = req.headers.get("authorization") || "";
+  const bearerToken = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : null;
+
+  // Prefer cookie/session auth first (existing behavior), but fall back to bearer token auth
+  // so voting works end-to-end even if cookies aren't present for this request.
+  const { data: userData0, error: userErr0 } = await supabase.auth.getUser();
+  let user = userData0.user;
+  let userErr = userErr0;
+
+  if ((!user || userErr) && bearerToken) {
+    try {
+      const { data: userData1, error: userErr1 } = await (supabase.auth as any).getUser(
+        bearerToken
+      );
+      user = userData1?.user;
+      userErr = userErr1;
+    } catch (e: any) {
+      userErr = e;
+      user = null;
+    }
+  }
+
   if (userErr || !user) return NextResponse.json({ error: "Not logged in" }, { status: 401 });
 
   let body: Record<string, unknown>;
