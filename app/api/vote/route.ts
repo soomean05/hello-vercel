@@ -11,11 +11,19 @@ function extractBearerToken(authHeader: string | null): string | null {
 
 function getUserIdFromBearerToken(token: string): string | null {
   try {
-    const b64 = token.split(".")[1];
-    if (!b64) return null;
-    const json = Buffer.from(b64, "base64url").toString("utf8");
+    const parts = token.split(".");
+    const payloadPart = parts[1];
+    if (!payloadPart) return null;
+
+    // Robust base64url decode (don't rely on Node supporting `base64url` encoding).
+    const base64 = payloadPart.replace(/-/g, "+").replace(/_/g, "/");
+    const padded = base64.padEnd(base64.length + ((4 - (base64.length % 4)) % 4), "=");
+    const json = Buffer.from(padded, "base64").toString("utf8");
     const payload = JSON.parse(json);
-    return payload?.sub ?? null;
+
+    // Supabase access tokens typically use `sub` for the auth user id.
+    // Keep a couple fallbacks in case token shape differs.
+    return payload?.sub ?? payload?.user_id ?? payload?.uid ?? null;
   } catch {
     return null;
   }
@@ -41,6 +49,7 @@ export async function POST(req: NextRequest) {
   }
 
   const decodedUserId = getUserIdFromBearerToken(bearerToken);
+  console.log("[vote api] decodedUserId:", decodedUserId, "tokenParts:", bearerToken.split(".").length);
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
