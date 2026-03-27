@@ -27,14 +27,21 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { error } = await supabase.from("caption_votes").insert({
-      caption_id,
-      profile_id: user.id,
-      user_id: user.id,
-      vote_value: vote,
-      created_by_user_id: user.id,
-      modified_by_user_id: user.id,
-    });
+    const { error } = await supabase
+      .from("caption_votes")
+      .upsert(
+        {
+          caption_id,
+          profile_id: user.id,
+          user_id: user.id,
+          vote_value: vote,
+          created_by_user_id: user.id,
+          modified_by_user_id: user.id,
+        },
+        {
+          onConflict: "caption_id,user_id",
+        }
+      );
 
     if (error) {
       return NextResponse.json(
