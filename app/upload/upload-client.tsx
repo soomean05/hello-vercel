@@ -27,6 +27,8 @@ export default function UploadClient() {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   const [captions, setCaptions] = useState<any[]>([]);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [generatedCaptions, setGeneratedCaptions] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -64,6 +66,8 @@ export default function UploadClient() {
     setBusy(true);
     setError(null);
     setCaptions([]);
+    setGeneratedCaptions([]);
+    setIsGenerating(true);
     setCompletedStep(null);
 
     try {
@@ -107,10 +111,18 @@ export default function UploadClient() {
       const j4 = await r4.json().catch(() => ({}));
       if (!r4.ok) throw new Error(j4.error || JSON.stringify(j4));
 
-      setCaptions(Array.isArray(j4) ? j4 : j4.captions ?? []);
+      const raw = Array.isArray(j4) ? j4 : j4.captions ?? [];
+      const normalized = raw
+        .map((c: any) => c?.content ?? c?.text ?? c?.caption ?? null)
+        .filter((c: any) => typeof c === "string" && c.trim().length > 0)
+        .slice(0, 5);
+
+      setGeneratedCaptions(normalized);
+      setCaptions(raw);
     } catch (e: any) {
       setError(e.message ?? "Pipeline failed");
     } finally {
+      setIsGenerating(false);
       setBusy(false);
     }
   }
@@ -260,7 +272,7 @@ export default function UploadClient() {
               fontSize: 15,
             }}
           >
-            Generate Captions
+            {isGenerating ? "Generating captions..." : "Generate Captions"}
           </button>
 
           {/* Step tracker */}
@@ -295,11 +307,28 @@ export default function UploadClient() {
             <div style={{ marginTop: 14, color: "crimson", fontSize: 14 }}>{error}</div>
           )}
 
-          {captions.length > 0 && (
+          {isGenerating && (
+            <div
+              style={{
+                marginTop: 20,
+                padding: "14px 18px",
+                borderRadius: 14,
+                background: "#f8fafc",
+                border: "1px solid #e2e8f0",
+              }}
+            >
+              <div style={{ fontWeight: 800, marginBottom: 6 }}>Generating 5 captions...</div>
+              <div style={{ fontSize: 14, color: "#64748b" }}>
+                Please wait while we create caption suggestions for your uploaded image.
+              </div>
+            </div>
+          )}
+
+          {generatedCaptions.length > 0 && (
             <div style={{ marginTop: 24 }}>
-              <div style={{ fontWeight: 800, marginBottom: 12 }}>Generated captions</div>
+              <div style={{ fontWeight: 800, marginBottom: 12 }}>Generated captions (5)</div>
               <div style={{ display: "grid", gap: 10 }}>
-                {captions.slice(0, 10).map((c: any, i: number) => (
+                {generatedCaptions.map((caption, i: number) => (
                   <div
                     key={i}
                     style={{
@@ -310,7 +339,7 @@ export default function UploadClient() {
                       lineHeight: 1.4,
                     }}
                   >
-                    {c.content ?? c.text ?? c.caption ?? JSON.stringify(c)}
+                    {caption}
                   </div>
                 ))}
               </div>
