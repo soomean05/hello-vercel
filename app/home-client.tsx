@@ -34,21 +34,26 @@ export default function HomeClient() {
   useEffect(() => {
     let mounted = true;
 
-    supabase.auth
-      .getSession()
-      .then((result) => {
-        const email = result.data.session?.user?.email ?? null;
+    async function loadSession() {
+      try {
+        const result = await supabase.auth.getSession();
+        const session = result.data.session;
+        const email = session?.user?.email ?? null;
+
         console.log("[homepage] session user email:", email);
+
         if (!mounted) return;
         setSessionEmail(email);
         setSessionReady(true);
-      })
-      .catch((e) => {
+      } catch (e) {
         console.log("[homepage] getSession error:", e);
         if (!mounted) return;
         setSessionEmail(null);
         setSessionReady(true);
-      });
+      }
+    }
+
+    loadSession();
 
     const {
       data: { subscription },
