@@ -1,17 +1,29 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 import HomeClient from "./home-client";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 export default async function HomePage() {
+  const supabase = await createSupabaseServerClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (user) {
+    redirect("/rate");
+  }
+
   return (
     <main
       style={{
         minHeight: "100vh",
-        background: "linear-gradient(180deg, #0f0f12 0%, #1a1a1f 50%, #0f0f12 100%)",
+        background:
+          "radial-gradient(circle at top, #f8fafc 0%, #f1f5f9 45%, #e2e8f0 100%)",
         fontFamily: "system-ui, -apple-system, sans-serif",
-        color: "#e4e4e7",
+        color: "#0f172a",
       }}
     >
       <header
@@ -19,19 +31,19 @@ export default async function HomePage() {
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
-          padding: "20px 32px",
-          maxWidth: 1100,
+          padding: "24px 32px",
+          maxWidth: 1120,
           margin: "0 auto",
         }}
       >
         <Link
           href="/"
           style={{
-            fontSize: 20,
-            fontWeight: 800,
-            color: "#fff",
+            fontSize: 22,
+            fontWeight: 900,
+            color: "#0f172a",
             textDecoration: "none",
-            letterSpacing: -0.5,
+            letterSpacing: -0.6,
           }}
         >
           CaptionRater
@@ -41,30 +53,30 @@ export default async function HomePage() {
 
       <section
         style={{
-          maxWidth: 720,
+          maxWidth: 900,
           margin: "0 auto",
-          padding: "48px 32px 80px",
+          padding: "44px 32px 88px",
           textAlign: "center",
         }}
       >
         <h1
           style={{
             margin: 0,
-            fontSize: "clamp(2.5rem, 6vw, 3.5rem)",
-            fontWeight: 800,
-            lineHeight: 1.1,
-            letterSpacing: -0.03,
+            fontSize: "clamp(2.5rem, 6vw, 3.8rem)",
+            fontWeight: 900,
+            lineHeight: 1.05,
+            letterSpacing: -0.04,
           }}
         >
           Rate memes. Generate captions. Find the funniest.
         </h1>
         <p
           style={{
-            marginTop: 24,
-            fontSize: 18,
+            marginTop: 20,
+            fontSize: 19,
             lineHeight: 1.6,
-            color: "#a1a1aa",
-            maxWidth: 560,
+            color: "#334155",
+            maxWidth: 640,
             marginLeft: "auto",
             marginRight: "auto",
           }}
@@ -75,51 +87,52 @@ export default async function HomePage() {
 
         <div
           style={{
-            marginTop: 48,
-            padding: "32px 28px",
-            background: "rgba(255,255,255,0.04)",
-            borderRadius: 16,
-            border: "1px solid rgba(255,255,255,0.08)",
+            marginTop: 46,
+            padding: "32px 30px",
+            background: "rgba(255,255,255,0.8)",
+            borderRadius: 20,
+            border: "1px solid rgba(15,23,42,0.08)",
+            boxShadow: "0 14px 40px rgba(15,23,42,0.08)",
             textAlign: "left",
           }}
         >
-          <h2 style={{ margin: "0 0 16px 0", fontSize: 18, fontWeight: 700, color: "#fff" }}>
+          <h2 style={{ margin: "0 0 16px 0", fontSize: 18, fontWeight: 800, color: "#0f172a" }}>
             How it works
           </h2>
           <ol
             style={{
               margin: 0,
               paddingLeft: 20,
-              color: "#a1a1aa",
-              lineHeight: 2,
+              color: "#475569",
+              lineHeight: 1.9,
               fontSize: 15,
             }}
           >
             <li>
-              <strong style={{ color: "#e4e4e7" }}>Sign in with Google</strong> — one click, no password.
+              <strong style={{ color: "#0f172a" }}>Sign in with Google</strong> — one click, no password.
             </li>
             <li>
-              <strong style={{ color: "#e4e4e7" }}>Rate captions</strong> — see a meme and caption, give a thumbs up or down.
+              <strong style={{ color: "#0f172a" }}>Rate captions</strong> — see a meme and caption, give a thumbs up or down.
             </li>
             <li>
-              <strong style={{ color: "#e4e4e7" }}>Upload & generate</strong> — upload your own image; our AI suggests 5 captions.
+              <strong style={{ color: "#0f172a" }}>Upload & generate</strong> — upload your own image; our AI suggests 5 captions.
             </li>
             <li>
-              <strong style={{ color: "#e4e4e7" }}>Improve the dataset</strong> — your votes train better models over time.
+              <strong style={{ color: "#0f172a" }}>Improve the dataset</strong> — your votes train better models over time.
             </li>
           </ol>
         </div>
 
         <div
           style={{
-            marginTop: 40,
+            marginTop: 22,
             padding: "24px 28px",
-            background: "rgba(255,255,255,0.03)",
-            borderRadius: 14,
-            border: "1px solid rgba(255,255,255,0.06)",
+            background: "rgba(255,255,255,0.72)",
+            borderRadius: 16,
+            border: "1px solid rgba(15,23,42,0.08)",
           }}
         >
-          <p style={{ margin: 0, fontSize: 14, color: "#71717a" }}>
+          <p style={{ margin: 0, fontSize: 14, color: "#64748b" }}>
             All features — rating and uploading — are in the app after you sign in.
             Get started below.
           </p>

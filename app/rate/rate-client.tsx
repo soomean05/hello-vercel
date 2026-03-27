@@ -38,38 +38,39 @@ export default function RateClient({
 
   const headerCard: React.CSSProperties = {
     background: "white",
-    borderRadius: 18,
-    padding: "16px 20px",
-    boxShadow: "0 10px 35px rgba(0,0,0,0.08)",
-    border: "1px solid rgba(0,0,0,0.06)",
-    marginBottom: 14,
+    borderRadius: 20,
+    padding: "18px 22px",
+    boxShadow: "0 14px 38px rgba(15,23,42,0.08)",
+    border: "1px solid rgba(15,23,42,0.08)",
+    marginBottom: 16,
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
     flexWrap: "wrap",
-    gap: 10,
+    gap: 12,
   };
   const navBtn: React.CSSProperties = {
-    padding: "8px 12px",
+    padding: "9px 14px",
     borderRadius: 12,
-    border: "1px solid rgba(0,0,0,0.12)",
+    border: "1px solid rgba(15,23,42,0.12)",
     background: "white",
-    fontWeight: 700,
+    fontWeight: 800,
     textDecoration: "none",
-    color: "#111",
+    color: "#0f172a",
     fontSize: 14,
+    boxShadow: "0 2px 8px rgba(15,23,42,0.05)",
   };
   const mainCard: React.CSSProperties = {
     background: "white",
-    borderRadius: 18,
-    padding: 22,
-    boxShadow: "0 10px 35px rgba(0,0,0,0.08)",
-    border: "1px solid rgba(0,0,0,0.06)",
+    borderRadius: 20,
+    padding: 24,
+    boxShadow: "0 16px 44px rgba(15,23,42,0.09)",
+    border: "1px solid rgba(15,23,42,0.08)",
   };
 
   if (!items || items.length === 0) {
     return (
-      <main style={{ padding: 24, fontFamily: "system-ui", background: "#f6f7f9", minHeight: "100vh" }}>
+      <main style={{ padding: 28, fontFamily: "system-ui", background: "linear-gradient(180deg, #f8fafc 0%, #eef2f7 100%)", minHeight: "100vh" }}>
         <div style={{ maxWidth: 800, margin: "0 auto" }}>
         <div style={headerCard}>
           <div style={{ fontWeight: 900, fontSize: 20 }}>Rate captions</div>
@@ -77,7 +78,7 @@ export default function RateClient({
             <a href="/upload" style={navBtn}>Upload</a>
           </div>
         </div>
-        <div style={{ ...mainCard, padding: 28 }}>
+        <div style={{ ...mainCard, padding: 30 }}>
           <p style={{ color: "#666", margin: 0 }}>No captions available yet. Upload some images first.</p>
         </div>
         </div>
@@ -87,7 +88,7 @@ export default function RateClient({
 
   if (idx >= randomized.length) {
     return (
-      <main style={{ padding: 24, fontFamily: "system-ui", background: "#f6f7f9", minHeight: "100vh" }}>
+      <main style={{ padding: 28, fontFamily: "system-ui", background: "linear-gradient(180deg, #f8fafc 0%, #eef2f7 100%)", minHeight: "100vh" }}>
         <div style={{ maxWidth: 800, margin: "0 auto" }}>
         <div style={headerCard}>
           <div style={{ fontWeight: 900, fontSize: 20 }}>Rate captions</div>
@@ -99,8 +100,8 @@ export default function RateClient({
           style={{
             marginTop: 16,
             padding: 16,
-            border: "1px solid #eee",
-            borderRadius: 14,
+              border: "1px solid rgba(15,23,42,0.08)",
+              borderRadius: 16,
             background: "#fafafa",
           }}
         >
@@ -116,7 +117,7 @@ export default function RateClient({
               padding: "10px 14px",
               borderRadius: 12,
               border: "none",
-              background: "#111",
+              background: "#0f172a",
               color: "white",
               cursor: "pointer",
               fontWeight: 600,
@@ -131,11 +132,11 @@ export default function RateClient({
   }
 
   return (
-    <main style={{ padding: 24, fontFamily: "system-ui", background: "#f6f7f9", minHeight: "100vh" }}>
+    <main style={{ padding: 28, fontFamily: "system-ui", background: "linear-gradient(180deg, #f8fafc 0%, #eef2f7 100%)", minHeight: "100vh" }}>
       <div style={{ maxWidth: 800, margin: "0 auto" }}>
         <div style={headerCard}>
           <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-            <span style={{ fontWeight: 900, fontSize: 20 }}>Rate captions</span>
+            <span style={{ fontWeight: 900, fontSize: 21, color: "#0f172a" }}>Rate captions</span>
             <span style={{ color: "#666", fontSize: 14 }}>
               {idx + 1} / {randomized.length}
             </span>
@@ -155,8 +156,8 @@ export default function RateClient({
               width: "100%",
               aspectRatio: "16 / 9",
               objectFit: "cover",
-              borderRadius: 14,
-              border: "1px solid #eee",
+              borderRadius: 16,
+              border: "1px solid rgba(15,23,42,0.09)",
               marginBottom: 14,
             }}
           />
@@ -164,8 +165,8 @@ export default function RateClient({
           <div
             style={{
               padding: 40,
-              borderRadius: 14,
-              border: "1px dashed #ddd",
+              borderRadius: 16,
+              border: "1px dashed rgba(15,23,42,0.18)",
               color: "#777",
               background: "#fafafa",
               marginBottom: 14,
@@ -178,7 +179,7 @@ export default function RateClient({
           </div>
         )}
 
-        <div style={{ fontSize: 18, fontWeight: 900, marginBottom: 14, lineHeight: 1.4 }}>
+        <div style={{ fontSize: 20, fontWeight: 900, marginBottom: 16, lineHeight: 1.35, color: "#0f172a" }}>
           {current.content}
         </div>
 
@@ -194,10 +195,10 @@ export default function RateClient({
               marginLeft: "auto",
               padding: "10px 14px",
               borderRadius: 12,
-              border: "1px solid rgba(0,0,0,0.12)",
+              border: "1px solid rgba(15,23,42,0.12)",
               background: "white",
               cursor: "pointer",
-              fontWeight: 600,
+              fontWeight: 700,
             }}
           >
             Skip →
