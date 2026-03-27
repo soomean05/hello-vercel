@@ -154,7 +154,6 @@ export default function UploadClient() {
             </p>
           </div>
           <div style={{ display: "flex", gap: 10 }}>
-            <Link href="/" style={btn}>Home</Link>
             <Link href="/rate" style={btn}>Rate</Link>
             <button type="button" onClick={signOut} style={btn}>
               Sign out
