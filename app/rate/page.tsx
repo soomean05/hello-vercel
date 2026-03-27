@@ -55,7 +55,7 @@ export default async function RatePage() {
   return (
     <>
       <Navbar />
-      <RateClient email={null} items={items} />
+      <RateClient items={items} />
     </>
   );
 }

@@ -32,8 +32,7 @@ export default function VoteButtons({
       });
 
       const result = await res.json();
-      console.log("vote response status:", res.status);
-      console.log("vote response body:", result);
+      console.log("vote response:", res.status, result);
 
       if (!res.ok) {
         alert(result.error || "Vote failed");

@@ -2,8 +2,6 @@
 
 import { useEffect, useMemo, useState } from "react";
 import VoteButtons from "@/app/components/VoteButtons";
-import { createSupabaseBrowserClient } from "@/lib/supabase/client";
-import type { AuthChangeEvent, Session } from "@supabase/supabase-js";
 
 type Item = {
   id: string | number;
@@ -21,58 +19,12 @@ function shuffle<T>(arr: T[]) {
 }
 
 export default function RateClient({
-  email,
   items,
 }: {
-  email?: string | null;
   items: Item[];
 }) {
-  const supabase = useMemo(() => createSupabaseBrowserClient(), []);
-  const [sessionMissing, setSessionMissing] = useState<boolean | null>(null);
-  const [sessionReady, setSessionReady] = useState(false);
-
   const randomized = useMemo(() => shuffle(items), [items]);
   const [idx, setIdx] = useState(0);
-
-  useEffect(() => {
-    let mounted = true;
-
-    async function loadSession() {
-      try {
-        const result = await supabase.auth.getSession();
-        const session = result.data.session;
-        const email = session?.user?.email ?? null;
-
-        console.log("[rate page] session user email:", email);
-
-        if (!mounted) return;
-        setSessionMissing(!session);
-        setSessionReady(true);
-      } catch (e) {
-        console.log("[rate page] getSession error:", e);
-        if (!mounted) return;
-        setSessionMissing(true);
-        setSessionReady(true);
-      }
-    }
-
-    loadSession();
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((event: AuthChangeEvent, session: Session | null) => {
-      const email = session?.user?.email ?? null;
-      console.log("[rate page] auth state change:", event, "email:", email);
-      if (!mounted) return;
-      setSessionMissing(!session);
-      setSessionReady(true);
-    });
-
-    return () => {
-      mounted = false;
-      subscription.unsubscribe();
-    };
-  }, [supabase]);
 
   const current = randomized[idx];
 
@@ -196,42 +148,6 @@ export default function RateClient({
           </div>
         </div>
 
-        {sessionMissing === true && (
-          <div
-            style={{
-              marginBottom: 14,
-              padding: 12,
-              borderRadius: 12,
-              background: "#fff8e6",
-              border: "1px solid #e6d68a",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              flexWrap: "wrap",
-              gap: 10,
-            }}
-          >
-            <span style={{ fontSize: 14, color: "#666" }}>
-              Session missing in client. Refresh page.
-            </span>
-            <button
-              type="button"
-              onClick={() => window.location.reload()}
-              style={{
-                padding: "8px 14px",
-                borderRadius: 10,
-                border: "1px solid rgba(0,0,0,0.12)",
-                background: "white",
-                fontWeight: 600,
-                cursor: "pointer",
-                fontSize: 14,
-              }}
-            >
-              Refresh
-            </button>
-          </div>
-        )}
-
         <div style={mainCard}>
         {current?.imageUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
@@ -272,7 +188,7 @@ export default function RateClient({
         <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
           <VoteButtons
             captionId={current.id}
-            disabled={!sessionReady || sessionMissing === true}
+            disabled={false}
             onVoted={next}
           />
           <button
