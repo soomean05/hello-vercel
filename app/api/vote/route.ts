@@ -1,22 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export async function POST(req: NextRequest) {
   try {
-    const authHeader = req.headers.get("authorization");
+    const supabase = await createSupabaseServerClient();
 
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
+
+    if (userError || !user) {
       return NextResponse.json(
-        { error: "Missing or invalid authorization header" },
-        { status: 401 }
-      );
-    }
-
-    const token = authHeader.slice("Bearer ".length).trim();
-
-    if (!token) {
-      return NextResponse.json(
-        { error: "Missing bearer token" },
+        { error: userError?.message || "Not authenticated" },
         { status: 401 }
       );
     }
@@ -28,30 +24,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         { error: "Invalid request body" },
         { status: 400 }
-      );
-    }
-
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        global: {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        },
-      }
-    );
-
-    const {
-      data: { user },
-      error: userError,
-    } = await supabase.auth.getUser();
-
-    if (userError || !user) {
-      return NextResponse.json(
-        { error: userError?.message || "Not authenticated" },
-        { status: 401 }
       );
     }
 

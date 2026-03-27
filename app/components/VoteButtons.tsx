@@ -1,7 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import { useState } from "react";
 
 type Vote = 1 | -1;
 
@@ -14,10 +13,41 @@ export default function VoteButtons({
   disabled: boolean;
   onVoted?: () => void;
 }) {
-  const supabase = useMemo(() => createSupabaseBrowserClient(), []);
   const [loading, setLoading] = useState<Vote | null>(null);
   const [selected, setSelected] = useState<Vote | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  async function handleVote(captionId: string, vote: 1 | -1) {
+    try {
+      const res = await fetch("/api/vote", {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          caption_id: captionId,
+          vote,
+        }),
+      });
+
+      const result = await res.json();
+      console.log("vote response status:", res.status);
+      console.log("vote response body:", result);
+
+      if (!res.ok) {
+        alert(result.error || "Vote failed");
+        return false;
+      }
+
+      console.log("Vote saved successfully");
+      return true;
+    } catch (err) {
+      console.error("handleVote error:", err);
+      alert("Vote failed");
+      return false;
+    }
+  }
 
   async function submitVote(value: Vote) {
     if (disabled) return;
@@ -26,48 +56,18 @@ export default function VoteButtons({
     setError(null);
 
     try {
-      const { data } = await supabase.auth.getSession();
-      const token = data.session?.access_token;
-
-      console.log("[vote handler] getSession:", {
-        sessionPresent: !!data.session,
-        userEmail: data.session?.user?.email ?? null,
-        tokenPresent: !!token,
-        tokenLength: typeof token === "string" ? token.length : 0,
-      });
-
-      if (!token) {
-        console.log("[vote handler] token missing - full session result:", data.session);
-        alert("You must be logged in to vote.");
-        setError("You must be logged in to vote.");
+      const ok = await handleVote(String(captionId), value);
+      if (!ok) {
+        setError("Vote failed");
         return;
       }
 
-      const res = await fetch("/api/vote", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          caption_id: captionId,
-          vote: value,
-        }),
-      });
-
-      if (res.ok) {
-        setSelected(value);
-        // small delay so user sees feedback, then advance
-        setTimeout(() => {
-          onVoted?.();
-          setSelected(null);
-        }, 250);
-      } else {
-        const data = await res.json().catch(() => ({}));
-        setError(data.error ?? "Vote failed");
-      }
-    } catch {
-      setError("Vote failed");
+      setSelected(value);
+      // small delay so user sees feedback, then advance
+      setTimeout(() => {
+        onVoted?.();
+        setSelected(null);
+      }, 250);
     } finally {
       setLoading(null);
     }
