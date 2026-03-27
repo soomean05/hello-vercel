@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import type { AuthChangeEvent, Session } from "@supabase/supabase-js";
 
 const btnBase = {
   padding: "10px 20px",
@@ -57,7 +58,7 @@ export default function HomeClient() {
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((event, session) => {
+    } = supabase.auth.onAuthStateChange((event: AuthChangeEvent, session: Session | null) => {
       const email = session?.user?.email ?? null;
       console.log("[homepage] auth state change:", event, "email:", email);
       if (!mounted) return;
