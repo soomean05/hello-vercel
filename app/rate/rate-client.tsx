@@ -74,7 +74,6 @@ export default function RateClient({
         <div style={headerCard}>
           <div style={{ fontWeight: 900, fontSize: 20 }}>Rate captions</div>
           <div style={{ display: "flex", gap: 10 }}>
-            <a href="/" style={navBtn}>Home</a>
             <a href="/upload" style={navBtn}>Upload</a>
           </div>
         </div>
@@ -93,7 +92,6 @@ export default function RateClient({
         <div style={headerCard}>
           <div style={{ fontWeight: 900, fontSize: 20 }}>Rate captions</div>
           <div style={{ display: "flex", gap: 10 }}>
-            <a href="/" style={navBtn}>Home</a>
             <a href="/upload" style={navBtn}>Upload</a>
           </div>
         </div>
@@ -143,7 +141,6 @@ export default function RateClient({
             </span>
           </div>
           <div style={{ display: "flex", gap: 10 }}>
-            <a href="/" style={navBtn}>Home</a>
             <a href="/upload" style={navBtn}>Upload</a>
           </div>
         </div>
