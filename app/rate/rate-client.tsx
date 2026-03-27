@@ -29,7 +29,6 @@ export default function RateClient({
   const supabase = useMemo(() => createSupabaseBrowserClient(), []);
   const [sessionMissing, setSessionMissing] = useState<boolean | null>(null);
   const [sessionReady, setSessionReady] = useState(false);
-  const [sessionUserEmail, setSessionUserEmail] = useState<string | null>(null);
 
   const randomized = useMemo(() => shuffle(items), [items]);
   const [idx, setIdx] = useState(0);
@@ -39,18 +38,16 @@ export default function RateClient({
 
     supabase.auth
       .getSession()
-      .then(({ data }) => {
-        const email = data.session?.user?.email ?? null;
+      .then((result) => {
+        const email = result.data.session?.user?.email ?? null;
         console.log("[rate page] session user email:", email);
         if (!mounted) return;
-        setSessionUserEmail(email);
-        setSessionMissing(!data.session);
+        setSessionMissing(!result.data.session);
         setSessionReady(true);
       })
       .catch((e) => {
         console.log("[rate page] getSession error:", e);
         if (!mounted) return;
-        setSessionUserEmail(null);
         setSessionMissing(true);
         setSessionReady(true);
       });
@@ -61,7 +58,6 @@ export default function RateClient({
       const email = session?.user?.email ?? null;
       console.log("[rate page] auth state change:", event, "email:", email);
       if (!mounted) return;
-      setSessionUserEmail(email);
       setSessionMissing(!session);
       setSessionReady(true);
     });

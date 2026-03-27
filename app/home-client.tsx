@@ -36,8 +36,8 @@ export default function HomeClient() {
 
     supabase.auth
       .getSession()
-      .then(({ data }) => {
-        const email = data.session?.user?.email ?? null;
+      .then((result) => {
+        const email = result.data.session?.user?.email ?? null;
         console.log("[homepage] session user email:", email);
         if (!mounted) return;
         setSessionEmail(email);
