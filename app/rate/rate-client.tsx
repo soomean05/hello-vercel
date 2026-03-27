@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import VoteButtons from "@/app/components/VoteButtons";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import type { AuthChangeEvent, Session } from "@supabase/supabase-js";
 
 type Item = {
   id: string | number;
@@ -36,25 +37,30 @@ export default function RateClient({
   useEffect(() => {
     let mounted = true;
 
-    supabase.auth
-      .getSession()
-      .then((result) => {
-        const email = result.data.session?.user?.email ?? null;
+    async function loadSession() {
+      try {
+        const result = await supabase.auth.getSession();
+        const session = result.data.session;
+        const email = session?.user?.email ?? null;
+
         console.log("[rate page] session user email:", email);
+
         if (!mounted) return;
-        setSessionMissing(!result.data.session);
+        setSessionMissing(!session);
         setSessionReady(true);
-      })
-      .catch((e) => {
+      } catch (e) {
         console.log("[rate page] getSession error:", e);
         if (!mounted) return;
         setSessionMissing(true);
         setSessionReady(true);
-      });
+      }
+    }
+
+    loadSession();
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((event, session) => {
+    } = supabase.auth.onAuthStateChange((event: AuthChangeEvent, session: Session | null) => {
       const email = session?.user?.email ?? null;
       console.log("[rate page] auth state change:", event, "email:", email);
       if (!mounted) return;
