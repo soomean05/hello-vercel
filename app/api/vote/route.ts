@@ -33,13 +33,12 @@ export async function POST(req: NextRequest) {
         {
           caption_id,
           profile_id: user.id,
-          user_id: user.id,
           vote_value: vote,
           created_by_user_id: user.id,
           modified_by_user_id: user.id,
         },
         {
-          onConflict: "caption_id,user_id",
+          onConflict: "caption_id,profile_id",
         }
       );
 
