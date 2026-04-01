@@ -124,7 +124,7 @@ export default function UploadSection() {
   return (
     <div style={card}>
       <h2 style={{ margin: "0 0 16px 0", fontSize: 20, fontWeight: 800 }}>Upload & generate captions</h2>
-      <p style={{ margin: "0 0 16px 0", fontSize: 14, color: "#666" }}>
+      <p style={{ margin: "0 0 16px 0", fontSize: 14, color: "#374151" }}>
         Upload an image and our AI will suggest 5 different captions.
       </p>
 
@@ -158,7 +158,7 @@ export default function UploadSection() {
           Choose file
         </button>
         {file && (
-          <span style={{ alignSelf: "center", fontSize: 14, color: "#555" }}>{file.name}</span>
+          <span style={{ alignSelf: "center", fontSize: 14, color: "#374151" }}>{file.name}</span>
         )}
         <button
           type="button"

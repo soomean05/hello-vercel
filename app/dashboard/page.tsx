@@ -58,7 +58,7 @@ export default async function DashboardPage() {
         >
           <div>
             <h1 style={{ margin: 0, fontSize: 22, fontWeight: 900 }}>Dashboard</h1>
-            <p style={{ margin: "4px 0 0 0", fontSize: 14, color: "#666" }}>
+            <p style={{ margin: "4px 0 0 0", fontSize: 14, color: "#374151" }}>
               Signed in as <strong>{data.user.email ?? data.user.id}</strong>
             </p>
           </div>
@@ -71,7 +71,7 @@ export default async function DashboardPage() {
               background: "white",
               fontWeight: 700,
               textDecoration: "none",
-              color: "#111",
+              color: "#111827",
               fontSize: 14,
             }}
           >
@@ -82,7 +82,7 @@ export default async function DashboardPage() {
         <div style={{ ...card, marginBottom: 14 }}>
           <h2 style={{ margin: "0 0 12px 0", fontSize: 18 }}>My recent votes</h2>
           {votes.length === 0 ? (
-            <p style={{ color: "#666", margin: 0 }}>No votes yet. Head to /rate to start.</p>
+            <p style={{ color: "#374151", margin: 0 }}>No votes yet. Head to /rate to start.</p>
           ) : (
             <div style={{ display: "grid", gap: 8 }}>
               {votes.map((v: any) => (
@@ -100,7 +100,7 @@ export default async function DashboardPage() {
                   }}
                 >
                   <span>Caption {v.caption_id} → {v.vote_value === 1 ? "👍" : "👎"}</span>
-                  <span style={{ fontSize: 12, color: "#777" }}>
+                  <span style={{ fontSize: 12, color: "#4b5563" }}>
                     {v.created_datetime_utc ? new Date(v.created_datetime_utc).toLocaleDateString() : ""}
                   </span>
                 </div>
@@ -112,7 +112,7 @@ export default async function DashboardPage() {
         <div style={card}>
           <h2 style={{ margin: "0 0 12px 0", fontSize: 18 }}>My uploads</h2>
           {uploads.length === 0 ? (
-            <p style={{ color: "#666", margin: 0 }}>No uploads yet. Head to /upload to add images.</p>
+            <p style={{ color: "#374151", margin: 0 }}>No uploads yet. Head to /upload to add images.</p>
           ) : (
             <div style={{ display: "grid", gap: 10 }}>
               {uploads.map((u: any) => (
@@ -139,7 +139,7 @@ export default async function DashboardPage() {
                   <div style={{ flex: 1, fontSize: 14 }}>
                     <span style={{ fontWeight: 600 }}>Image {u.id}</span>
                     {u.created_at && (
-                      <span style={{ marginLeft: 8, fontSize: 12, color: "#777" }}>
+                      <span style={{ marginLeft: 8, fontSize: 12, color: "#4b5563" }}>
                         {new Date(u.created_at).toLocaleDateString()}
                       </span>
                     )}
@@ -154,7 +154,7 @@ export default async function DashboardPage() {
                       fontSize: 12,
                       fontWeight: 700,
                       textDecoration: "none",
-                      color: "#111",
+                      color: "#111827",
                     }}
                   >
                     Rate

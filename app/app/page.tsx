@@ -37,14 +37,14 @@ export default async function AppPage() {
           style={{
             fontSize: 18,
             fontWeight: 900,
-            color: "#111",
+            color: "#111827",
             textDecoration: "none",
           }}
         >
           CaptionRater
         </Link>
         <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-          <span style={{ fontSize: 14, color: "#666" }}>
+          <span style={{ fontSize: 14, color: "#4b5563" }}>
             {data.user.email ?? "Signed in"}
           </span>
           <Link
@@ -57,7 +57,7 @@ export default async function AppPage() {
               fontWeight: 700,
               fontSize: 14,
               textDecoration: "none",
-              color: "#111",
+              color: "#111827",
             }}
           >
             Sign out

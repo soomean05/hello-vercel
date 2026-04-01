@@ -42,10 +42,10 @@ export default async function ProtectedPage() {
         }}
       >
         <h1 style={{ margin: 0, fontSize: 28 }}>You're signed in</h1>
-        <p style={{ marginTop: 8, color: "#444" }}>
+        <p style={{ marginTop: 8, color: "#374151" }}>
           <strong>{data.user.email ?? data.user.id}</strong>
         </p>
-        <p style={{ margin: 0, fontSize: 12, color: "#777" }}>
+        <p style={{ margin: 0, fontSize: 12, color: "#4b5563" }}>
           User ID: {data.user.id}
         </p>
 
@@ -59,7 +59,7 @@ export default async function ProtectedPage() {
               background: "white",
               fontWeight: 900,
               textDecoration: "none",
-              color: "#111",
+              color: "#111827",
               display: "inline-block",
             }}
           >
@@ -74,7 +74,7 @@ export default async function ProtectedPage() {
               background: "white",
               fontWeight: 900,
               textDecoration: "none",
-              color: "#111",
+              color: "#111827",
               display: "inline-block",
             }}
           >

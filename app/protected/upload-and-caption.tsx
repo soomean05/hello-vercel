@@ -167,19 +167,19 @@ export default function UploadAndCaption() {
               borderRadius: 12,
               border: "1px solid rgba(0,0,0,0.12)",
               background: busy ? "#ddd" : "white",
-              color: "#111",
+              color: "#111827",
               cursor: busy ? "not-allowed" : "pointer",
             }}
           >
             Choose Image
           </button>
 
-          <span style={{ fontSize: 14, color: "#444" }}>
+          <span style={{ fontSize: 14, color: "#374151" }}>
             {file ? file.name : "No file selected"}
           </span>
         </div>
 
-        <small style={{ color: "#666" }}>
+        <small style={{ color: "#4b5563" }}>
           Supported: jpeg/jpg/png/webp/gif/heic
         </small>
       </div>
@@ -207,14 +207,14 @@ export default function UploadAndCaption() {
           {busy ? "Working..." : "Upload + Generate Captions"}
         </button>
 
-        <div style={{ color: "#444" }}>{status}</div>
+        <div style={{ color: "#374151" }}>{status}</div>
       </div>
 
       {(localPreview || cdnUrl) && (
         <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
           {localPreview && (
             <div>
-              <div style={{ fontSize: 12, color: "#666", marginBottom: 6 }}>
+              <div style={{ fontSize: 12, color: "#4b5563", marginBottom: 6 }}>
                 Local preview
               </div>
               {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -232,7 +232,7 @@ export default function UploadAndCaption() {
 
           {cdnUrl && (
             <div>
-              <div style={{ fontSize: 12, color: "#666", marginBottom: 6 }}>
+              <div style={{ fontSize: 12, color: "#4b5563", marginBottom: 6 }}>
                 CDN preview
               </div>
               {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -251,7 +251,7 @@ export default function UploadAndCaption() {
       )}
 
       {imageId && (
-        <div style={{ fontSize: 12, color: "#666" }}>
+        <div style={{ fontSize: 12, color: "#4b5563" }}>
           imageId: <code>{imageId}</code>
         </div>
       )}
@@ -294,7 +294,7 @@ export default function UploadAndCaption() {
               Go Rate Captions →
             </button>
 
-            <div style={{ marginTop: 8, fontSize: 12, color: "#666" }}>
+            <div style={{ marginTop: 8, fontSize: 12, color: "#4b5563" }}>
               If you don’t see your captions there, your Ratings page may be using
               a separate caption pool.
             </div>

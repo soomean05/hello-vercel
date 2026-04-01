@@ -26,7 +26,7 @@ export default async function ListPage() {
           marginBottom: 24,
         }}
       >
-        <Link href="/" style={{ fontSize: 18, fontWeight: 900, color: "#111", textDecoration: "none" }}>
+        <Link href="/" style={{ fontSize: 18, fontWeight: 900, color: "#111827", textDecoration: "none" }}>
           CaptionRater
         </Link>
         <Link
@@ -39,7 +39,7 @@ export default async function ListPage() {
             fontWeight: 700,
             fontSize: 14,
             textDecoration: "none",
-            color: "#111",
+            color: "#111827",
           }}
         >
           Home
@@ -84,7 +84,7 @@ export default async function ListPage() {
             padding: 24,
             borderRadius: 12,
             background: "#f6f7f9",
-            color: "#666",
+            color: "#374151",
           }}
         >
           No captions found.
@@ -111,7 +111,7 @@ export default async function ListPage() {
             >
               <p style={{ margin: 0, fontSize: 15, lineHeight: 1.5 }}>{row.content}</p>
               {row.imageUrl && (
-                <p style={{ margin: "8px 0 0 0", fontSize: 12, color: "#666" }}>
+                <p style={{ margin: "8px 0 0 0", fontSize: 12, color: "#4b5563" }}>
                   Image: {row.imageUrl}
                 </p>
               )}

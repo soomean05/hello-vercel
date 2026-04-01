@@ -12,7 +12,7 @@ const linkStyle = {
   fontWeight: 700,
   fontSize: 14,
   textDecoration: "none",
-  color: "#111",
+  color: "#111827",
   cursor: "pointer",
 } as const;
 

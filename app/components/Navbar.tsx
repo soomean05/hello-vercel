@@ -16,25 +16,25 @@ export default function Navbar() {
       <nav style={{ display: "flex", gap: 20, alignItems: "center" }}>
         <Link
           href="/"
-          style={{ fontSize: 18, fontWeight: 900, color: "#111", textDecoration: "none" }}
+          style={{ fontSize: 18, fontWeight: 900, color: "#111827", textDecoration: "none" }}
         >
           CaptionRater
         </Link>
         <Link
           href="/protected"
-          style={{ fontSize: 14, color: "#444", textDecoration: "none", fontWeight: 500 }}
+          style={{ fontSize: 14, color: "#374151", textDecoration: "none", fontWeight: 500 }}
         >
           Dashboard
         </Link>
         <Link
           href="/rate"
-          style={{ fontSize: 14, color: "#444", textDecoration: "none", fontWeight: 500 }}
+          style={{ fontSize: 14, color: "#374151", textDecoration: "none", fontWeight: 500 }}
         >
           Rate
         </Link>
         <Link
           href="/upload"
-          style={{ fontSize: 14, color: "#444", textDecoration: "none", fontWeight: 500 }}
+          style={{ fontSize: 14, color: "#374151", textDecoration: "none", fontWeight: 500 }}
         >
           Upload
         </Link>

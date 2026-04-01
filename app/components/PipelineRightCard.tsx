@@ -203,7 +203,7 @@ export default function PipelineRightCard() {
         />
       </div>
 
-      <div style={{ marginTop: 12, fontSize: 13, color: "#444", lineHeight: 1.45 }}>
+      <div style={{ marginTop: 12, fontSize: 13, color: "#374151", lineHeight: 1.45 }}>
         Upload an image (logged-in users only) and generate captions via the staging pipeline API.
       </div>
 
@@ -268,7 +268,7 @@ export default function PipelineRightCard() {
               background: "rgba(0,0,0,0.03)",
               border: "1px solid rgba(0,0,0,0.06)",
               fontSize: 12,
-              color: "#333",
+              color: "#1f2937",
               display: "flex",
               justifyContent: "space-between",
               gap: 10,
@@ -291,7 +291,7 @@ export default function PipelineRightCard() {
             </button>
           </div>
         ) : (
-          <div style={{ fontSize: 12, color: "#777" }}>
+          <div style={{ fontSize: 12, color: "#4b5563" }}>
             Choose an image to enable <b>Run pipeline</b>.
           </div>
         )}
@@ -332,7 +332,7 @@ export default function PipelineRightCard() {
               background: "rgba(0,0,0,0.02)",
             }}
           >
-            <div style={{ padding: 10, fontSize: 12, color: "#555", display: "flex", justifyContent: "space-between" }}>
+            <div style={{ padding: 10, fontSize: 12, color: "#374151", display: "flex", justifyContent: "space-between" }}>
               <span>Uploaded preview</span>
               <span style={{ opacity: 0.7 }}>imageId: {imageId ?? "…"}</span>
             </div>

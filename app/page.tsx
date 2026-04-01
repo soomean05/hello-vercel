@@ -23,7 +23,7 @@ export default async function HomePage() {
         background:
           "radial-gradient(circle at top, #f8fafc 0%, #f1f5f9 45%, #e2e8f0 100%)",
         fontFamily: "system-ui, -apple-system, sans-serif",
-        color: "#0f172a",
+        color: "#111827",
       }}
     >
       <header
@@ -41,7 +41,7 @@ export default async function HomePage() {
           style={{
             fontSize: 22,
             fontWeight: 900,
-            color: "#0f172a",
+            color: "#111827",
             textDecoration: "none",
             letterSpacing: -0.6,
           }}
@@ -75,7 +75,7 @@ export default async function HomePage() {
             marginTop: 20,
             fontSize: 19,
             lineHeight: 1.6,
-            color: "#334155",
+            color: "#1f2937",
             maxWidth: 640,
             marginLeft: "auto",
             marginRight: "auto",
@@ -96,29 +96,29 @@ export default async function HomePage() {
             textAlign: "left",
           }}
         >
-          <h2 style={{ margin: "0 0 16px 0", fontSize: 18, fontWeight: 800, color: "#0f172a" }}>
+          <h2 style={{ margin: "0 0 16px 0", fontSize: 18, fontWeight: 800, color: "#111827" }}>
             How it works
           </h2>
           <ol
             style={{
               margin: 0,
               paddingLeft: 20,
-              color: "#475569",
+              color: "#374151",
               lineHeight: 1.9,
               fontSize: 15,
             }}
           >
             <li>
-              <strong style={{ color: "#0f172a" }}>Sign in with Google</strong> — one click, no password.
+              <strong style={{ color: "#111827" }}>Sign in with Google</strong> — one click, no password.
             </li>
             <li>
-              <strong style={{ color: "#0f172a" }}>Rate captions</strong> — see a meme and caption, give a thumbs up or down.
+              <strong style={{ color: "#111827" }}>Rate captions</strong> — see a meme and caption, give a thumbs up or down.
             </li>
             <li>
-              <strong style={{ color: "#0f172a" }}>Upload & generate</strong> — upload your own image; our AI suggests 5 captions.
+              <strong style={{ color: "#111827" }}>Upload & generate</strong> — upload your own image; our AI suggests 5 captions.
             </li>
             <li>
-              <strong style={{ color: "#0f172a" }}>Improve the dataset</strong> — your votes train better models over time.
+              <strong style={{ color: "#111827" }}>Improve the dataset</strong> — your votes train better models over time.
             </li>
           </ol>
         </div>
@@ -132,7 +132,7 @@ export default async function HomePage() {
             border: "1px solid rgba(15,23,42,0.08)",
           }}
         >
-          <p style={{ margin: 0, fontSize: 14, color: "#64748b" }}>
+          <p style={{ margin: 0, fontSize: 14, color: "#4b5563" }}>
             All features — rating and uploading — are in the app after you sign in.
             Get started below.
           </p>

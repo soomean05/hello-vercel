@@ -64,7 +64,7 @@ export default function LoginClient({ next }: { next: string }) {
         >
           {busy ? "Working…" : "Continue with Google"}
         </button>
-        <p style={{ margin: 0, fontSize: 11, color: "#999" }}>
+        <p style={{ margin: 0, fontSize: 11, color: "#4b5563" }}>
           Redirects to /auth/callback
         </p>
       </div>

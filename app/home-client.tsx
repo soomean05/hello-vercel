@@ -35,7 +35,7 @@ export default function HomeClient() {
       style={{
         ...btnBase,
         background: "#fff",
-        color: "#0f0f12",
+        color: "#111827",
         border: "none",
       }}
     >

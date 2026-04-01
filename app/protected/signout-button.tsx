@@ -19,7 +19,7 @@ export default function SignOutButton() {
         borderRadius: 12,
         border: "1px solid rgba(0,0,0,0.12)",
         background: "white",
-        color: "#111",
+        color: "#111827",
         fontSize: 14,
         cursor: "pointer",
       }}

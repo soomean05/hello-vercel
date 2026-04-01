@@ -44,7 +44,7 @@ export default function RateSection({ items }: { items: Item[] }) {
     return (
       <div style={card}>
         <h2 style={{ margin: "0 0 12px 0", fontSize: 20, fontWeight: 800 }}>Rate captions</h2>
-        <p style={{ color: "#666", margin: 0 }}>No captions available yet. Upload an image below to generate some.</p>
+        <p style={{ color: "#374151", margin: 0 }}>No captions available yet. Upload an image below to generate some.</p>
       </div>
     );
   }
@@ -53,7 +53,7 @@ export default function RateSection({ items }: { items: Item[] }) {
     return (
       <div style={card}>
         <h2 style={{ margin: "0 0 12px 0", fontSize: 20, fontWeight: 800 }}>Rate captions</h2>
-        <p style={{ margin: 0, color: "#666" }}>You rated everything in this batch.</p>
+        <p style={{ margin: 0, color: "#374151" }}>You rated everything in this batch.</p>
         <button
           onClick={() => setIdx(0)}
           style={{
@@ -78,7 +78,7 @@ export default function RateSection({ items }: { items: Item[] }) {
     <div style={card}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
         <h2 style={{ margin: 0, fontSize: 20, fontWeight: 800 }}>Rate captions</h2>
-        <span style={{ color: "#666", fontSize: 14 }}>
+        <span style={{ color: "#4b5563", fontSize: 14 }}>
           {idx + 1} / {randomized.length}
         </span>
       </div>
@@ -103,7 +103,7 @@ export default function RateSection({ items }: { items: Item[] }) {
             padding: 40,
             borderRadius: 14,
             border: "1px dashed #ddd",
-            color: "#777",
+            color: "#4b5563",
             background: "#fafafa",
             marginBottom: 14,
             aspectRatio: "16 / 9",

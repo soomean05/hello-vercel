@@ -161,7 +161,7 @@ export default function UploadClient() {
         >
           <div>
             <h1 style={{ margin: 0, fontSize: 22, fontWeight: 900 }}>Upload meme</h1>
-            <p style={{ margin: "4px 0 0 0", fontSize: 14, color: "#666" }}>
+            <p style={{ margin: "4px 0 0 0", fontSize: 14, color: "#374151" }}>
               We'll generate captions via AlmostCrackd pipeline.
             </p>
           </div>
@@ -224,13 +224,13 @@ export default function UploadClient() {
                   }}
                 />
                 {file && (
-                  <div style={{ marginTop: 10, fontSize: 14, color: "#555" }}>
+                  <div style={{ marginTop: 10, fontSize: 14, color: "#374151" }}>
                     {file.name} · {file.type}
                   </div>
                 )}
               </>
             ) : (
-              <span style={{ color: "#999", fontSize: 14 }}>Choose an image to preview</span>
+              <span style={{ color: "#4b5563", fontSize: 14 }}>Choose an image to preview</span>
             )}
           </div>
 
@@ -251,7 +251,7 @@ export default function UploadClient() {
               Choose file
             </button>
             {file && (
-              <span style={{ marginLeft: 12, fontSize: 14, color: "#555" }}>
+              <span style={{ marginLeft: 12, fontSize: 14, color: "#374151" }}>
                 {file.name}
               </span>
             )}
@@ -318,7 +318,7 @@ export default function UploadClient() {
               }}
             >
               <div style={{ fontWeight: 800, marginBottom: 6 }}>Generating 5 captions...</div>
-              <div style={{ fontSize: 14, color: "#64748b" }}>
+              <div style={{ fontSize: 14, color: "#4b5563" }}>
                 Please wait while we create caption suggestions for your uploaded image.
               </div>
             </div>

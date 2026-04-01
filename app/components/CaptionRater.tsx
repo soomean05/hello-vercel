@@ -26,14 +26,14 @@ export default function CaptionRater({ captions }: { captions: Caption[] }) {
   }
 
   if (!captions || captions.length === 0) {
-    return <p style={{ marginTop: 12, color: "#666" }}>No captions found.</p>;
+    return <p style={{ marginTop: 12, color: "#374151" }}>No captions found.</p>;
   }
 
   if (idx >= captions.length) {
     return (
       <div style={{ marginTop: 12 }}>
         <h3 style={{ margin: 0 }}>All done 🎉</h3>
-        <p style={{ marginTop: 8, color: "#666" }}>You’ve rated all captions.</p>
+        <p style={{ marginTop: 8, color: "#374151" }}>You’ve rated all captions.</p>
         <button
           onClick={() => {
             setImgFailed(false);
@@ -57,7 +57,7 @@ export default function CaptionRater({ captions }: { captions: Caption[] }) {
   return (
     <div style={{ marginTop: 14 }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <span style={{ fontSize: 12, color: "#666" }}>{progressText}</span>
+        <span style={{ fontSize: 12, color: "#4b5563" }}>{progressText}</span>
 
         <button
           onClick={next}
@@ -108,7 +108,7 @@ export default function CaptionRater({ captions }: { captions: Caption[] }) {
               display: "grid",
               placeItems: "center",
               marginBottom: 12,
-              color: "#666",
+              color: "#4b5563",
               fontSize: 13,
             }}
           >
@@ -118,7 +118,7 @@ export default function CaptionRater({ captions }: { captions: Caption[] }) {
 
         {/* Optional: show the URL for debugging (remove later) */}
         {imgFailed && (
-          <div style={{ fontSize: 12, color: "#888", marginBottom: 10, wordBreak: "break-all" }}>
+          <div style={{ fontSize: 12, color: "#4b5563", marginBottom: 10, wordBreak: "break-all" }}>
             Failed URL: {String(current.imageUrl)}
           </div>
         )}

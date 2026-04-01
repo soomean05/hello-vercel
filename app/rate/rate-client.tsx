@@ -56,7 +56,7 @@ export default function RateClient({
     background: "white",
     fontWeight: 800,
     textDecoration: "none",
-    color: "#0f172a",
+    color: "#111827",
     fontSize: 14,
     boxShadow: "0 2px 8px rgba(15,23,42,0.05)",
   };
@@ -79,7 +79,7 @@ export default function RateClient({
           </div>
         </div>
         <div style={{ ...mainCard, padding: 30 }}>
-          <p style={{ color: "#666", margin: 0 }}>No captions available yet. Upload some images first.</p>
+          <p style={{ color: "#374151", margin: 0 }}>No captions available yet. Upload some images first.</p>
         </div>
         </div>
       </main>
@@ -106,7 +106,7 @@ export default function RateClient({
           }}
         >
           <h2 style={{ margin: 0 }}>You’re done ✅</h2>
-          <p style={{ marginTop: 8, color: "#666" }}>
+          <p style={{ marginTop: 8, color: "#374151" }}>
             You rated everything in this batch.
           </p>
 
@@ -136,8 +136,8 @@ export default function RateClient({
       <div style={{ maxWidth: 800, margin: "0 auto" }}>
         <div style={headerCard}>
           <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-            <span style={{ fontWeight: 900, fontSize: 21, color: "#0f172a" }}>Rate captions</span>
-            <span style={{ color: "#666", fontSize: 14 }}>
+            <span style={{ fontWeight: 900, fontSize: 21, color: "#111827" }}>Rate captions</span>
+            <span style={{ color: "#4b5563", fontSize: 14 }}>
               {idx + 1} / {randomized.length}
             </span>
           </div>
@@ -167,7 +167,7 @@ export default function RateClient({
               padding: 40,
               borderRadius: 16,
               border: "1px dashed rgba(15,23,42,0.18)",
-              color: "#777",
+              color: "#4b5563",
               background: "#fafafa",
               marginBottom: 14,
               aspectRatio: "16 / 9",
@@ -179,7 +179,7 @@ export default function RateClient({
           </div>
         )}
 
-        <div style={{ fontSize: 20, fontWeight: 900, marginBottom: 16, lineHeight: 1.35, color: "#0f172a" }}>
+        <div style={{ fontSize: 20, fontWeight: 900, marginBottom: 16, lineHeight: 1.35, color: "#111827" }}>
           {current.content}
         </div>
 
