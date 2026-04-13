@@ -62,11 +62,8 @@ export default function VoteButtons({
       }
 
       setSelected(value);
-      // small delay so user sees feedback, then advance
-      setTimeout(() => {
-        onVoted?.();
-        setSelected(null);
-      }, 250);
+      onVoted?.();
+      setSelected(null);
     } finally {
       setLoading(null);
     }

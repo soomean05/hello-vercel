@@ -197,6 +197,7 @@ export default function RateClient({
               borderRadius: 12,
               border: "1px solid rgba(15,23,42,0.12)",
               background: "white",
+              color: "#111827",
               cursor: "pointer",
               fontWeight: 700,
             }}

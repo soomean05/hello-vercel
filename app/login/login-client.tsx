@@ -47,7 +47,7 @@ export default function LoginClient({ next }: { next: string }) {
           gap: 16,
         }}
       >
-        <h1 style={{ margin: 0, fontSize: 24, fontWeight: 900 }}>Sign in</h1>
+        <h1 style={{ margin: 0, fontSize: 24, fontWeight: 900, color: "#111827" }}>Sign in</h1>
         {msg ? <div style={{ color: "crimson", fontSize: 14 }}>{msg}</div> : null}
         <button
           onClick={continueWithGoogle}
@@ -57,6 +57,7 @@ export default function LoginClient({ next }: { next: string }) {
             borderRadius: 14,
             border: "1px solid rgba(0,0,0,0.15)",
             background: "white",
+            color: "#111827",
             fontWeight: 800,
             fontSize: 16,
             cursor: busy ? "not-allowed" : "pointer",

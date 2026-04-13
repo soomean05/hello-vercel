@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getAuthToken } from "../lib/getAuthToken";
 
@@ -15,6 +15,14 @@ const SUPPORTED = new Set([
 
 type Step = 1 | 2 | 3 | 4 | null;
 
+function stepIcon(completed: Step, active: Step, n: 1 | 2 | 3 | 4) {
+  const done = completed !== null && completed >= n;
+  const running = active === n;
+  if (done) return "\u2705";
+  if (running) return "\u2026";
+  return "";
+}
+
 const card: React.CSSProperties = {
   background: "white",
   borderRadius: 18,
@@ -27,13 +35,22 @@ export default function UploadSection() {
   const router = useRouter();
   const fileRef = useRef<HTMLInputElement | null>(null);
   const [busy, setBusy] = useState(false);
+  const [activeStep, setActiveStep] = useState<Step>(null);
   const [completedStep, setCompletedStep] = useState<Step>(null);
   const [file, setFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [cdnUrl, setCdnUrl] = useState<string | null>(null);
   const [captions, setCaptions] = useState<any[]>([]);
   const [error, setError] = useState<string | null>(null);
 
+  useEffect(() => {
+    return () => {
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+    };
+  }, [previewUrl]);
+
   async function runPipeline() {
+    if (busy) return;
     if (!file) {
       setError("Choose an image first.");
       return;
@@ -48,18 +65,18 @@ export default function UploadSection() {
     setCaptions([]);
     setCdnUrl(null);
     setCompletedStep(null);
+    setActiveStep(null);
 
     try {
       const token = await getAuthToken();
       if (!token) {
         setError("Not authenticated. Please sign in again.");
-        setBusy(false);
         return;
       }
 
       const authHeaders = { Authorization: `Bearer ${token}` };
 
-      setCompletedStep(1);
+      setActiveStep(1);
       const r1 = await fetch("/api/pipeline/generate-presigned-url", {
         method: "POST",
         headers: { "Content-Type": "application/json", ...authHeaders },
@@ -70,17 +87,18 @@ export default function UploadSection() {
 
       const presignedUrl: string = j1.presignedUrl;
       const cdnUrlFromApi: string = j1.cdnUrl;
-      setCdnUrl(cdnUrlFromApi);
+      setCompletedStep(1);
 
-      setCompletedStep(2);
+      setActiveStep(2);
       const r2 = await fetch(presignedUrl, {
         method: "PUT",
         headers: { "Content-Type": file.type },
         body: file,
       });
       if (!r2.ok) throw new Error(await r2.text());
+      setCompletedStep(2);
 
-      setCompletedStep(3);
+      setActiveStep(3);
       const r3 = await fetch("/api/pipeline/upload-image-from-url", {
         method: "POST",
         headers: { "Content-Type": "application/json", ...authHeaders },
@@ -90,8 +108,10 @@ export default function UploadSection() {
       if (!r3.ok) throw new Error(j3.error || JSON.stringify(j3));
 
       const imageIdFromApi: string = j3.imageId;
+      setCdnUrl(cdnUrlFromApi);
+      setCompletedStep(3);
 
-      setCompletedStep(4);
+      setActiveStep(4);
       const r4 = await fetch("/api/pipeline/generate-captions", {
         method: "POST",
         headers: { "Content-Type": "application/json", ...authHeaders },
@@ -103,6 +123,7 @@ export default function UploadSection() {
       const list = Array.isArray(j4) ? j4 : j4.captions ?? [];
       const captionList = list.slice(0, 5);
       setCaptions(captionList);
+      setCompletedStep(4);
 
       // Persist to DB so they appear in rate feed
       const textList = captionList.map((c: any) => c?.content ?? c?.text ?? c?.caption ?? (typeof c === "string" ? c : JSON.stringify(c)));
@@ -117,13 +138,14 @@ export default function UploadSection() {
     } catch (e: any) {
       setError(e.message ?? "Pipeline failed");
     } finally {
+      setActiveStep(null);
       setBusy(false);
     }
   }
 
   return (
     <div style={card}>
-      <h2 style={{ margin: "0 0 16px 0", fontSize: 20, fontWeight: 800 }}>Upload & generate captions</h2>
+      <h2 style={{ margin: "0 0 16px 0", fontSize: 20, fontWeight: 800, color: "#111827" }}>Upload & generate captions</h2>
       <p style={{ margin: "0 0 16px 0", fontSize: 14, color: "#374151" }}>
         Upload an image and our AI will suggest 5 different captions.
       </p>
@@ -133,8 +155,12 @@ export default function UploadSection() {
         type="file"
         accept="image/*"
         onChange={(e) => {
-          setFile(e.target.files?.[0] ?? null);
+          const f = e.target.files?.[0] ?? null;
+          if (previewUrl) URL.revokeObjectURL(previewUrl);
+          setFile(f);
           setError(null);
+          if (f) setPreviewUrl(URL.createObjectURL(f));
+          else setPreviewUrl(null);
         }}
         style={{ display: "none" }}
         disabled={busy}
@@ -153,6 +179,7 @@ export default function UploadSection() {
             fontWeight: 700,
             cursor: busy ? "not-allowed" : "pointer",
             fontSize: 14,
+            color: "#111827",
           }}
         >
           Choose file
@@ -179,6 +206,24 @@ export default function UploadSection() {
         </button>
       </div>
 
+      {previewUrl && (
+        <div style={{ marginBottom: 16 }}>
+          <div style={{ fontWeight: 700, marginBottom: 8, color: "#111827" }}>Preview</div>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={previewUrl}
+            alt=""
+            style={{
+              maxWidth: "100%",
+              maxHeight: 280,
+              borderRadius: 14,
+              objectFit: "contain",
+              border: "1px solid #eee",
+            }}
+          />
+        </div>
+      )}
+
       <div
         style={{
           padding: "14px 18px",
@@ -191,11 +236,17 @@ export default function UploadSection() {
           marginBottom: 16,
         }}
       >
-        <div style={{ fontWeight: 700, marginBottom: 4 }}>Status</div>
-        <div>Step 1: presigned url {completedStep !== null && completedStep >= 1 ? "✅" : ""}</div>
-        <div>Step 2: upload {completedStep !== null && completedStep >= 2 ? "✅" : ""}</div>
-        <div>Step 3: register image {completedStep !== null && completedStep >= 3 ? "✅" : ""}</div>
-        <div>Step 4: generate captions {completedStep !== null && completedStep >= 4 ? "✅" : ""}</div>
+        <div style={{ fontWeight: 700, marginBottom: 4, color: "#111827" }}>Status</div>
+        <div style={{ color: "#374151" }}>
+          Step 1: presigned url {stepIcon(completedStep, activeStep, 1)}
+        </div>
+        <div style={{ color: "#374151" }}>Step 2: upload {stepIcon(completedStep, activeStep, 2)}</div>
+        <div style={{ color: "#374151" }}>
+          Step 3: register image {stepIcon(completedStep, activeStep, 3)}
+        </div>
+        <div style={{ color: "#374151" }}>
+          Step 4: generate captions {stepIcon(completedStep, activeStep, 4)}
+        </div>
       </div>
 
       {error && (
@@ -204,7 +255,7 @@ export default function UploadSection() {
 
       {cdnUrl && (
         <div style={{ marginBottom: 20 }}>
-          <div style={{ fontWeight: 700, marginBottom: 10 }}>Uploaded image</div>
+          <div style={{ fontWeight: 700, marginBottom: 10, color: "#111827" }}>Uploaded image</div>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={cdnUrl}
@@ -222,7 +273,7 @@ export default function UploadSection() {
 
       {captions.length > 0 && (
         <div>
-          <div style={{ fontWeight: 700, marginBottom: 12 }}>5 generated captions</div>
+          <div style={{ fontWeight: 700, marginBottom: 12, color: "#111827" }}>5 generated captions</div>
           <div style={{ display: "grid", gap: 10 }}>
             {captions.map((c: any, i: number) => (
               <div
@@ -233,6 +284,7 @@ export default function UploadSection() {
                   background: "#fafafa",
                   border: "1px solid #eee",
                   lineHeight: 1.4,
+                  color: "#111827",
                 }}
               >
                 {c.content ?? c.text ?? c.caption ?? JSON.stringify(c)}

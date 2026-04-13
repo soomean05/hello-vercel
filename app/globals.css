@@ -1,8 +1,13 @@
 @import "tailwindcss";
 
+/*
+  Light-only app: lock color-scheme and use explicit hex fallbacks so system
+  dark mode / UA defaults never flip inherited text to light gray on pale UI.
+*/
 :root {
+  color-scheme: light only;
   --background: #ffffff;
-  --foreground: #1f2937;
+  --foreground: #111827;
 }
 
 @theme inline {
@@ -12,8 +17,18 @@
   --font-mono: var(--font-geist-mono);
 }
 
+html {
+  color-scheme: light only;
+  background-color: #ffffff;
+  color: #111827;
+}
+
 body {
+  background-color: #ffffff;
+  color: #111827;
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+  /* Grayscale antialiasing makes mid-gray text look faint on light UI; prefer default/subpixel. */
+  -webkit-font-smoothing: subpixel-antialiased;
 }

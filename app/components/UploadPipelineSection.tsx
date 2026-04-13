@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 type PipelineState =
   | "idle"
@@ -38,6 +38,18 @@ export default function UploadPipelineSection() {
   const [cdnUrl, setCdnUrl] = useState<string | null>(null);
   const [imageId, setImageId] = useState<string | null>(null);
   const [captions, setCaptions] = useState<any[] | null>(null);
+   const [localPreviewUrl, setLocalPreviewUrl] = useState<string | null>(null);
+  const pipelineLock = useRef(false);
+
+  useEffect(() => {
+    if (!file) {
+      setLocalPreviewUrl(null);
+      return;
+    }
+    const url = URL.createObjectURL(file);
+    setLocalPreviewUrl(url);
+    return () => URL.revokeObjectURL(url);
+  }, [file]);
 
   const fileInfo = useMemo(() => {
     if (!file) return null;
@@ -45,6 +57,7 @@ export default function UploadPipelineSection() {
   }, [file]);
 
   async function runPipeline() {
+    if (pipelineLock.current) return;
     setError(null);
     setCdnUrl(null);
     setImageId(null);
@@ -69,6 +82,7 @@ export default function UploadPipelineSection() {
       return;
     }
 
+    pipelineLock.current = true;
     try {
       // STEP 1: presigned URL
       setState("getting_url");
@@ -163,6 +177,8 @@ export default function UploadPipelineSection() {
     } catch (e: any) {
       setState("error");
       setError(e?.message ?? String(e));
+    } finally {
+      pipelineLock.current = false;
     }
   }
 
@@ -176,9 +192,10 @@ export default function UploadPipelineSection() {
         boxShadow: "0 10px 35px rgba(0,0,0,0.08)",
       }}
     >
-      <div style={{ fontSize: 18, fontWeight: 900 }}>Upload → Generate captions (Pipeline)</div>
-      <div style={{ marginTop: 6, opacity: 0.75, lineHeight: 1.4 }}>
-        This runs the 4-step pipeline against <code>https://api.almostcrackd.ai</code> using your
+      <div style={{ fontSize: 18, fontWeight: 900, color: "#111827" }}>Upload → Generate captions (Pipeline)</div>
+      <div style={{ marginTop: 6, opacity: 0.75, lineHeight: 1.4, color: "#374151" }}>
+        This runs the 4-step pipeline against{" "}
+        <code style={{ color: "#111827" }}>https://api.almostcrackd.ai</code> using your
         current signed-in JWT.
       </div>
 
@@ -189,7 +206,19 @@ export default function UploadPipelineSection() {
           onChange={(e) => setFile(e.target.files?.[0] ?? null)}
         />
 
-        {fileInfo ? <div style={{ opacity: 0.8 }}>{fileInfo}</div> : null}
+        {fileInfo ? <div style={{ opacity: 0.8, color: "#374151" }}>{fileInfo}</div> : null}
+
+        {localPreviewUrl ? (
+          <div>
+            <div style={{ fontWeight: 700, marginBottom: 6, color: "#111827" }}>Local preview</div>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={localPreviewUrl}
+              alt=""
+              style={{ maxWidth: "100%", maxHeight: 280, borderRadius: 14, objectFit: "contain" }}
+            />
+          </div>
+        ) : null}
 
         <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
           <button
@@ -209,7 +238,7 @@ export default function UploadPipelineSection() {
             Run pipeline
           </button>
 
-          <div style={{ opacity: 0.8 }}>{prettyState(state)}</div>
+          <div style={{ opacity: 0.8, color: "#374151" }}>{prettyState(state)}</div>
         </div>
 
         {error ? (
@@ -227,27 +256,27 @@ export default function UploadPipelineSection() {
 
         {cdnUrl ? (
           <div style={{ marginTop: 10, display: "grid", gap: 10 }}>
-            <div style={{ fontWeight: 800 }}>Uploaded image preview</div>
+            <div style={{ fontWeight: 800, color: "#111827" }}>Uploaded image preview</div>
             <img
               src={cdnUrl}
               alt="Uploaded"
               style={{ maxWidth: "100%", maxHeight: 380, borderRadius: 14, objectFit: "contain" }}
             />
-            <div style={{ opacity: 0.7, fontSize: 13 }}>
+            <div style={{ opacity: 0.7, fontSize: 13, color: "#374151" }}>
               cdnUrl: <code>{cdnUrl}</code>
             </div>
           </div>
         ) : null}
 
         {imageId ? (
-          <div style={{ opacity: 0.8 }}>
+          <div style={{ opacity: 0.8, color: "#374151" }}>
             imageId: <code>{imageId}</code>
           </div>
         ) : null}
 
         {captions ? (
           <div style={{ marginTop: 8 }}>
-            <div style={{ fontWeight: 900, marginBottom: 8 }}>Generated captions</div>
+            <div style={{ fontWeight: 900, marginBottom: 8, color: "#111827" }}>Generated captions</div>
 
             <div style={{ display: "grid", gap: 8 }}>
               {captions.map((c, i) => {
@@ -265,7 +294,7 @@ export default function UploadPipelineSection() {
                       background: "rgba(0,0,0,0.02)",
                     }}
                   >
-                    <div style={{ lineHeight: 1.35 }}>
+                    <div style={{ lineHeight: 1.35, color: "#111827" }}>
                       {text ? String(text) : <code>{JSON.stringify(c)}</code>}
                     </div>
                   </div>

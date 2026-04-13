@@ -41,7 +41,7 @@ export default async function ProtectedPage() {
           border: "1px solid rgba(0,0,0,0.06)",
         }}
       >
-        <h1 style={{ margin: 0, fontSize: 28 }}>You're signed in</h1>
+        <h1 style={{ margin: 0, fontSize: 28, color: "#111827" }}>You're signed in</h1>
         <p style={{ marginTop: 8, color: "#374151" }}>
           <strong>{data.user.email ?? data.user.id}</strong>
         </p>

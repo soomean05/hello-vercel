@@ -32,7 +32,7 @@ export default function CaptionRater({ captions }: { captions: Caption[] }) {
   if (idx >= captions.length) {
     return (
       <div style={{ marginTop: 12 }}>
-        <h3 style={{ margin: 0 }}>All done 🎉</h3>
+        <h3 style={{ margin: 0, color: "#111827" }}>All done 🎉</h3>
         <p style={{ marginTop: 8, color: "#374151" }}>You’ve rated all captions.</p>
         <button
           onClick={() => {
@@ -46,6 +46,7 @@ export default function CaptionRater({ captions }: { captions: Caption[] }) {
             border: "1px solid rgba(0,0,0,0.15)",
             background: "white",
             cursor: "pointer",
+            color: "#111827",
           }}
         >
           Restart
@@ -68,6 +69,7 @@ export default function CaptionRater({ captions }: { captions: Caption[] }) {
             background: "white",
             cursor: "pointer",
             fontSize: 12,
+            color: "#111827",
           }}
         >
           Skip →
@@ -124,7 +126,7 @@ export default function CaptionRater({ captions }: { captions: Caption[] }) {
         )}
 
         {/* CAPTION TEXT */}
-        <div style={{ fontSize: 18, lineHeight: 1.4 }}>{current.content}</div>
+        <div style={{ fontSize: 18, lineHeight: 1.4, color: "#111827" }}>{current.content}</div>
 
         {/* VOTE -> NEXT */}
         <VoteButtons captionId={current.id} disabled={false} onVoted={next} />

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
 const ACCEPT =
@@ -38,13 +38,20 @@ export default function UploadAndCaption() {
   const [cdnUrl, setCdnUrl] = useState<string>("");
   const [imageId, setImageId] = useState<string>("");
   const [captions, setCaptions] = useState<CaptionItem[] | null>(null);
+  const [localPreview, setLocalPreview] = useState<string>("");
 
-  const localPreview = useMemo(
-    () => (file ? URL.createObjectURL(file) : ""),
-    [file]
-  );
+  useEffect(() => {
+    if (!file) {
+      setLocalPreview("");
+      return;
+    }
+    const url = URL.createObjectURL(file);
+    setLocalPreview(url);
+    return () => URL.revokeObjectURL(url);
+  }, [file]);
 
   async function run() {
+    if (busy) return;
     if (!file) return;
 
     if (!SUPPORTED.has(file.type)) {
@@ -132,7 +139,7 @@ export default function UploadAndCaption() {
   return (
     <div style={{ display: "grid", gap: 16 }}>
       <div style={{ display: "grid", gap: 8 }}>
-        <label style={{ fontWeight: 600 }}>Upload an image</label>
+        <label style={{ fontWeight: 600, color: "#111827" }}>Upload an image</label>
 
         {/* Hidden native file input */}
         <input

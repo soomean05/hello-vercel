@@ -16,17 +16,25 @@ const SUPPORTED = new Set([
 
 type Step = 1 | 2 | 3 | 4 | null;
 
+function stepIcon(completed: Step, active: Step, n: 1 | 2 | 3 | 4) {
+  const done = completed !== null && completed >= n;
+  const running = active === n;
+  if (done) return "\u2705";
+  if (running) return "\u2026";
+  return "";
+}
+
 export default function UploadClient() {
   const router = useRouter();
   const fileRef = useRef<HTMLInputElement | null>(null);
   const supabase = useMemo(() => createSupabaseBrowserClient(), []);
 
   const [busy, setBusy] = useState(false);
+  const [activeStep, setActiveStep] = useState<Step>(null);
   const [completedStep, setCompletedStep] = useState<Step>(null);
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
-  const [captions, setCaptions] = useState<any[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedCaptions, setGeneratedCaptions] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -43,6 +51,7 @@ export default function UploadClient() {
   }
 
   async function runPipeline() {
+    if (busy) return;
     if (!file) {
       setError("Choose an image first.");
       return;
@@ -52,26 +61,26 @@ export default function UploadClient() {
       return;
     }
 
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session?.access_token) {
-      setError("No access token. Refresh.");
-      return;
-    }
-
-    const headers: Record<string, string> = {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${session.access_token}`,
-    };
-
     setBusy(true);
     setError(null);
-    setCaptions([]);
     setGeneratedCaptions([]);
     setIsGenerating(true);
     setCompletedStep(null);
+    setActiveStep(null);
 
     try {
-      setCompletedStep(1);
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        setError("No access token. Refresh.");
+        return;
+      }
+
+      const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${session.access_token}`,
+      };
+
+      setActiveStep(1);
       const r1 = await fetch("/api/pipeline/generate-presigned-url", {
         method: "POST",
         headers,
@@ -82,16 +91,18 @@ export default function UploadClient() {
 
       const presignedUrl: string = j1.presignedUrl;
       const cdnUrlFromApi: string = j1.cdnUrl;
+      setCompletedStep(1);
 
-      setCompletedStep(2);
+      setActiveStep(2);
       const r2 = await fetch(presignedUrl, {
         method: "PUT",
         headers: { "Content-Type": file.type },
         body: file,
       });
       if (!r2.ok) throw new Error(await r2.text());
+      setCompletedStep(2);
 
-      setCompletedStep(3);
+      setActiveStep(3);
       const r3 = await fetch("/api/pipeline/upload-image-from-url", {
         method: "POST",
         headers,
@@ -101,8 +112,9 @@ export default function UploadClient() {
       if (!r3.ok) throw new Error(j3.error || JSON.stringify(j3));
 
       const imageIdFromApi: string = j3.imageId;
+      setCompletedStep(3);
 
-      setCompletedStep(4);
+      setActiveStep(4);
       const r4 = await fetch("/api/pipeline/generate-captions", {
         method: "POST",
         headers,
@@ -113,15 +125,22 @@ export default function UploadClient() {
 
       const raw = Array.isArray(j4) ? j4 : j4.captions ?? [];
       const normalized = raw
-        .map((c: any) => c?.content ?? c?.text ?? c?.caption ?? null)
-        .filter((c: any) => typeof c === "string" && c.trim().length > 0)
+        .map((c: unknown) => {
+          if (typeof c === "string") return c;
+          if (!c || typeof c !== "object") return null;
+          const o = c as Record<string, unknown>;
+          const v = o.content ?? o.text ?? o.caption;
+          return typeof v === "string" ? v : null;
+        })
+        .filter((c: string | null): c is string => typeof c === "string" && c.trim().length > 0)
         .slice(0, 5);
 
       setGeneratedCaptions(normalized);
-      setCaptions(raw);
+      setCompletedStep(4);
     } catch (e: any) {
       setError(e.message ?? "Pipeline failed");
     } finally {
+      setActiveStep(null);
       setIsGenerating(false);
       setBusy(false);
     }
@@ -139,13 +158,23 @@ export default function UploadClient() {
     borderRadius: 14,
     border: "1px solid rgba(0,0,0,0.12)",
     background: "white",
+    color: "#0f172a",
     fontWeight: 700,
     cursor: "pointer",
     fontSize: 14,
   };
 
   return (
-    <main style={{ minHeight: "100vh", background: "#f6f7f9", padding: 24, fontFamily: "system-ui" }}>
+    <main
+      style={{
+        minHeight: "100vh",
+        background: "#f6f7f9",
+        padding: 24,
+        fontFamily: "system-ui",
+        color: "#0f172a",
+        WebkitFontSmoothing: "subpixel-antialiased",
+      }}
+    >
       <div style={{ maxWidth: 800, margin: "0 auto" }}>
         {/* Header card */}
         <div
@@ -160,9 +189,9 @@ export default function UploadClient() {
           }}
         >
           <div>
-            <h1 style={{ margin: 0, fontSize: 22, fontWeight: 900 }}>Upload meme</h1>
-            <p style={{ margin: "4px 0 0 0", fontSize: 14, color: "#374151" }}>
-              We'll generate captions via AlmostCrackd pipeline.
+            <h1 style={{ margin: 0, fontSize: 22, fontWeight: 900, color: "#0f172a" }}>Upload meme</h1>
+            <p style={{ margin: "4px 0 0 0", fontSize: 14, color: "#1f2937", fontWeight: 500 }}>
+              We&apos;ll generate captions via AlmostCrackd pipeline.
             </p>
           </div>
           <div style={{ display: "flex", gap: 10 }}>
@@ -224,13 +253,13 @@ export default function UploadClient() {
                   }}
                 />
                 {file && (
-                  <div style={{ marginTop: 10, fontSize: 14, color: "#374151" }}>
+                  <div style={{ marginTop: 10, fontSize: 14, color: "#1f2937", fontWeight: 500 }}>
                     {file.name} · {file.type}
                   </div>
                 )}
               </>
             ) : (
-              <span style={{ color: "#4b5563", fontSize: 14 }}>Choose an image to preview</span>
+              <span style={{ color: "#374151", fontSize: 14, fontWeight: 500 }}>Choose an image to preview</span>
             )}
           </div>
 
@@ -246,12 +275,13 @@ export default function UploadClient() {
                 background: "white",
                 fontWeight: 700,
                 cursor: busy ? "not-allowed" : "pointer",
+                color: "#0f172a",
               }}
             >
               Choose file
             </button>
             {file && (
-              <span style={{ marginLeft: 12, fontSize: 14, color: "#374151" }}>
+              <span style={{ marginLeft: 12, fontSize: 14, color: "#1f2937", fontWeight: 500 }}>
                 {file.name}
               </span>
             )}
@@ -264,9 +294,9 @@ export default function UploadClient() {
             style={{
               padding: "14px 20px",
               borderRadius: 14,
-              border: "none",
-              background: busy || !file ? "#ccc" : "black",
-              color: "white",
+              border: busy || !file ? "1px solid #d1d5db" : "none",
+              background: busy || !file ? "#e5e7eb" : "#111827",
+              color: busy || !file ? "#0f172a" : "#ffffff",
               fontWeight: 800,
               cursor: busy || !file ? "not-allowed" : "pointer",
               fontSize: 15,
@@ -288,18 +318,18 @@ export default function UploadClient() {
               gap: 8,
             }}
           >
-            <div style={{ fontWeight: 800, marginBottom: 4 }}>Status</div>
-            <div>
-              Step 1: presigned url {completedStep !== null && completedStep >= 1 ? "✅" : ""}
+            <div style={{ fontWeight: 800, marginBottom: 4, color: "#0f172a" }}>Status</div>
+            <div style={{ color: "#1f2937", fontWeight: 500 }}>
+              Step 1: presigned url {stepIcon(completedStep, activeStep, 1)}
             </div>
-            <div>
-              Step 2: uploaded bytes {completedStep !== null && completedStep >= 2 ? "✅" : ""}
+            <div style={{ color: "#1f2937", fontWeight: 500 }}>
+              Step 2: uploaded bytes {stepIcon(completedStep, activeStep, 2)}
             </div>
-            <div>
-              Step 3: registered image {completedStep !== null && completedStep >= 3 ? "✅" : ""}
+            <div style={{ color: "#1f2937", fontWeight: 500 }}>
+              Step 3: registered image {stepIcon(completedStep, activeStep, 3)}
             </div>
-            <div>
-              Step 4: generated captions {completedStep !== null && completedStep >= 4 ? "✅" : ""}
+            <div style={{ color: "#1f2937", fontWeight: 500 }}>
+              Step 4: generated captions {stepIcon(completedStep, activeStep, 4)}
             </div>
           </div>
 
@@ -317,8 +347,8 @@ export default function UploadClient() {
                 border: "1px solid #e2e8f0",
               }}
             >
-              <div style={{ fontWeight: 800, marginBottom: 6 }}>Generating 5 captions...</div>
-              <div style={{ fontSize: 14, color: "#4b5563" }}>
+              <div style={{ fontWeight: 800, marginBottom: 6, color: "#0f172a" }}>Generating 5 captions...</div>
+              <div style={{ fontSize: 14, color: "#374151", fontWeight: 500 }}>
                 Please wait while we create caption suggestions for your uploaded image.
               </div>
             </div>
@@ -326,7 +356,7 @@ export default function UploadClient() {
 
           {generatedCaptions.length > 0 && (
             <div style={{ marginTop: 24 }}>
-              <div style={{ fontWeight: 800, marginBottom: 12 }}>Generated captions (5)</div>
+              <div style={{ fontWeight: 800, marginBottom: 12, color: "#0f172a" }}>Generated captions (5)</div>
               <div style={{ display: "grid", gap: 10 }}>
                 {generatedCaptions.map((caption, i: number) => (
                   <div
@@ -334,9 +364,12 @@ export default function UploadClient() {
                     style={{
                       padding: "14px 16px",
                       borderRadius: 14,
-                      background: "#fafafa",
-                      border: "1px solid #eee",
-                      lineHeight: 1.4,
+                      background: "#ffffff",
+                      border: "1px solid #e5e7eb",
+                      lineHeight: 1.45,
+                      color: "#0f172a",
+                      fontSize: 15,
+                      fontWeight: 500,
                     }}
                   >
                     {caption}

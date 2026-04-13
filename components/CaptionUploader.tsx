@@ -49,18 +49,12 @@ export default function CaptionUploader({
     };
   }, [previewUrl]);
 
-  async function authedPipeline(body: any) {
-    const { data: sess, error: sessErr } = await supabase.auth.getSession();
-    if (sessErr) throw sessErr;
-
-    const token = sess.session?.access_token;
-    if (!token) throw new Error("Not logged in");
-
+  async function authedPipeline(body: any, accessToken: string) {
     const res = await fetch("/api/pipeline", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
+        Authorization: `Bearer ${accessToken}`,
       },
       body: JSON.stringify(body),
     });
@@ -71,6 +65,7 @@ export default function CaptionUploader({
   }
 
   async function generateCaptions() {
+    if (busy) return;
     setStatus(null);
 
     try {
@@ -79,6 +74,8 @@ export default function CaptionUploader({
       const { data: sess0, error: sessErr0 } = await supabase.auth.getSession();
       if (sessErr0) throw sessErr0;
       if (!sess0.session?.user) throw new Error("Not logged in.");
+      const accessToken = sess0.session.access_token;
+      if (!accessToken) throw new Error("Not logged in.");
 
       const contentType = file.type;
       if (!contentType || !contentType.startsWith("image/")) {
@@ -88,7 +85,7 @@ export default function CaptionUploader({
       setBusy(true);
 
       // 1) presign
-      const presign = await authedPipeline({ step: "presign", contentType });
+      const presign = await authedPipeline({ step: "presign", contentType }, accessToken);
       const presignedUrl: string = presign.presignedUrl;
       const cdnUrl: string = presign.cdnUrl;
       if (!presignedUrl || !cdnUrl) throw new Error("Bad presign response.");
@@ -102,12 +99,12 @@ export default function CaptionUploader({
       if (!putRes.ok) throw new Error(`Upload to presigned URL failed (${putRes.status}).`);
 
       // 3) register
-      const reg = await authedPipeline({ step: "register", imageUrl: cdnUrl });
+      const reg = await authedPipeline({ step: "register", imageUrl: cdnUrl }, accessToken);
       const imageId: string = reg.imageId;
       if (!imageId) throw new Error("Bad register response (missing imageId).");
 
       // 4) captions
-      const capPayload = await authedPipeline({ step: "captions", imageId });
+      const capPayload = await authedPipeline({ step: "captions", imageId }, accessToken);
       const caps = normalizeCaptions(capPayload).slice(0, 5); // ✅ only 5
       if (caps.length === 0) throw new Error("No captions returned from pipeline.");
 
@@ -197,8 +194,8 @@ export default function CaptionUploader({
         gap: 12,
       }}
     >
-      <div style={{ fontSize: 18, fontWeight: 900 }}>{title}</div>
-      <div style={{ opacity: 0.75, fontSize: 13 }}>{subtitle}</div>
+      <div style={{ fontSize: 18, fontWeight: 900, color: "#111827" }}>{title}</div>
+      <div style={{ opacity: 0.75, fontSize: 13, color: "#374151" }}>{subtitle}</div>
 
       <input
         ref={fileInputRef}
@@ -233,13 +230,14 @@ export default function CaptionUploader({
             borderRadius: 14,
             border: "1px solid rgba(0,0,0,0.15)",
             background: "white",
+            color: "#111827",
             fontWeight: 900,
             cursor: "pointer",
           }}
         >
           Choose file
         </button>
-        <div style={{ fontSize: 13, opacity: 0.75 }}>{file ? file.name : "No file selected"}</div>
+        <div style={{ fontSize: 13, opacity: 0.75, color: "#374151" }}>{file ? file.name : "No file selected"}</div>
       </div>
 
       {/* Preview */}
@@ -282,6 +280,7 @@ export default function CaptionUploader({
             borderRadius: 14,
             border: "1px solid rgba(0,0,0,0.15)",
             background: "white",
+            color: "#111827",
             fontWeight: 900,
             cursor: busy || !file ? "not-allowed" : "pointer",
           }}
@@ -293,7 +292,7 @@ export default function CaptionUploader({
       {/* Caption picker */}
       {generated.length > 0 ? (
         <div style={{ display: "grid", gap: 10, marginTop: 6 }}>
-          <div style={{ fontWeight: 900 }}>Pick captions to save:</div>
+          <div style={{ fontWeight: 900, color: "#111827" }}>Pick captions to save:</div>
 
           <div style={{ display: "grid", gap: 8 }}>
             {generated.map((c, i) => (
@@ -314,7 +313,7 @@ export default function CaptionUploader({
                   onChange={(e) => setSelected((prev) => ({ ...prev, [i]: e.target.checked }))}
                   style={{ marginTop: 3 }}
                 />
-                <span style={{ lineHeight: 1.35 }}>{c}</span>
+                <span style={{ lineHeight: 1.35, color: "#111827" }}>{c}</span>
               </label>
             ))}
           </div>
@@ -326,6 +325,7 @@ export default function CaptionUploader({
               borderRadius: 14,
               border: "1px solid rgba(0,0,0,0.15)",
               background: "white",
+              color: "#111827",
               fontWeight: 900,
               cursor: "pointer",
             }}
